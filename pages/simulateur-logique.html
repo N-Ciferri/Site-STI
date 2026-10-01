@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur de portes logiques</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F3EE;
+    --surface:#FFFFFF;
+    --surface-2:#FBFAF7;
+    --text:#1C2024;
+    --text-muted:#5C6470;
+    --border:#DCD6C9;
+    --accent:#1F3864;
+    --accent-soft:#E7ECF4;
+    --gate-and:#2F5496;
+    --gate-and-soft:#DCE6F0;
+    --gate-or:#2E7D32;
+    --gate-not:#B8860B;
+    --signal-on:#0891A8;
+    --signal-off:#B7BFC9;
+    --bad:#B03A2E;
+    --shadow: 0 1px 2px rgba(28,32,36,.06), 0 8px 20px -12px rgba(28,32,36,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171B;
+      --surface:#1D2126;
+      --surface-2:#20242A;
+      --text:#E9ECEF;
+      --text-muted:#98A2AD;
+      --border:#31363D;
+      --accent:#7FA3D9;
+      --accent-soft:#22314A;
+      --gate-and:#7FA3D9;
+      --gate-and-soft:#22314A;
+      --gate-or:#79C68A;
+      --gate-not:#E5BB5C;
+      --signal-on:#3FD3E8;
+      --signal-off:#454C55;
+      --bad:#E58C7E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14171B;
+    --surface:#1D2126;
+    --surface-2:#20242A;
+    --text:#E9ECEF;
+    --text-muted:#98A2AD;
+    --border:#31363D;
+    --accent:#7FA3D9;
+    --accent-soft:#22314A;
+    --gate-and:#7FA3D9;
+    --gate-and-soft:#22314A;
+    --gate-or:#79C68A;
+    --gate-not:#E5BB5C;
+    --signal-on:#3FD3E8;
+    --signal-off:#454C55;
+    --bad:#E58C7E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:28px 48px;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+  .retour{ color:inherit; opacity:.75; text-decoration:none; font-size:14px; }
+  .retour:hover{ text-decoration:underline; }
+
+  header.page h1{
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+    font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; text-wrap:balance;
+  }
+  header.page p{ margin:0; color:var(--text-muted); font-size:.98rem; max-width:70ch; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace; font-size:.72rem; font-weight:600;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--accent);
+    margin-bottom:6px; display:block;
+  }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding: 22px clamp(14px,3vw,28px); box-shadow:var(--shadow);
+  }
+  .panel h2{ font-size:1.15rem; margin:0 0 4px; font-weight:700; }
+  .panel > .sub{ color:var(--text-muted); font-size:.92rem; margin:0 0 18px; max-width:75ch; }
+
+  /* --- Réglages --- */
+  .settings{ display:flex; gap:24px; flex-wrap:wrap; margin-bottom:18px; }
+  .stepper{ display:flex; flex-direction:column; gap:6px; }
+  .stepper > span{ font-size:.8rem; font-weight:600; color:var(--text-muted); }
+  .stepper-ctrl{
+    display:flex; align-items:center; border:1.5px solid var(--border); border-radius:9px;
+    background:var(--surface-2); width:fit-content; overflow:hidden;
+  }
+  .stepper-ctrl button{
+    appearance:none; border:none; background:transparent; color:var(--text);
+    font:inherit; font-weight:700; font-size:1.1rem; width:40px; height:40px; cursor:pointer;
+  }
+  .stepper-ctrl button:hover{ background:var(--accent-soft); }
+  .stepper-ctrl button:disabled{ opacity:.35; cursor:not-allowed; background:transparent; }
+  .stepper-ctrl output{
+    min-width:36px; text-align:center; font-family:"IBM Plex Mono", monospace;
+    font-weight:600; font-size:1.05rem; color:var(--accent);
+  }
+
+  .btn{
+    appearance:none; border:none; cursor:pointer; font:inherit; font-weight:600; font-size:.9rem;
+    border-radius:9px; padding:10px 16px; transition: transform .08s ease, filter .15s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-ghost{ background:var(--surface-2); color:var(--text); border:1.5px solid var(--border); }
+  .btn-ghost:hover:not(:disabled){ background:var(--accent-soft); }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .btn:focus-visible, .stepper-ctrl button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* --- Plan de câblage --- */
+  .builder-layout{ display:flex; gap:16px; flex-wrap:wrap; }
+  .palette{
+    display:flex; flex-direction:column; align-self:flex-start; gap:10px; width:150px; flex-shrink:0;
+  }
+  .palette-item{
+    display:flex; align-items:center; gap:10px; background:var(--surface-2);
+    border:1.5px solid var(--border); border-radius:10px; padding:8px 12px;
+    cursor:grab; user-select:none; font-size:.85rem; font-weight:600; white-space:nowrap;
+  }
+  .palette-item:active{ cursor:grabbing; }
+  .palette-swatch{
+    width:34px; height:28px; border-radius:5px; display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono", monospace; font-weight:700; font-size:.85rem; color:#fff; flex-shrink:0;
+  }
+  .palette-item[data-type="AND"] .palette-swatch,
+  .palette-item[data-type="NAND"] .palette-swatch{ background:var(--gate-and); }
+  .palette-item[data-type="OR"] .palette-swatch,
+  .palette-item[data-type="NOR"] .palette-swatch{ background:var(--gate-or); }
+  .palette-item[data-type="NOT"] .palette-swatch{ background:var(--gate-not); }
+  .palette-item[data-type="XOR"] .palette-swatch,
+  .palette-item[data-type="XNOR"] .palette-swatch{ background:var(--accent); }
+
+  .canvas-wrap{
+    flex:1; min-width:280px; border:1.5px dashed var(--border); border-radius:12px;
+    background: linear-gradient(var(--surface-2) 1px, transparent 1px) 0 0/100% 30px, var(--surface);
+    overflow:hidden; touch-action:none;
+  }
+  .canvas-wrap svg{ display:block; width:100%; height:auto; }
+
+  .legend{ display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; font-size:.8rem; color:var(--text-muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend i{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+
+  /* --- Table de vérité --- */
+  .table-scroll{ overflow-x:auto; max-height:520px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
+  table.tv{ border-collapse:collapse; font-family:"IBM Plex Mono", monospace; font-size:.9rem; width:100%; }
+  table.tv th, table.tv td{
+    padding:6px 12px; text-align:center; border-bottom:1px solid var(--border);
+    font-variant-numeric:tabular-nums;
+  }
+  table.tv thead th{
+    position:sticky; top:0; background:var(--surface-2); color:var(--text-muted); font-weight:600; z-index:1;
+  }
+  table.tv th.sep, table.tv td.sep{ border-left:2px solid var(--border); }
+  table.tv td.out{ font-weight:700; }
+  table.tv td.one{ color:var(--signal-on); }
+  table.tv td.zero{ color:var(--text-muted); }
+  table.tv tbody tr{ cursor:pointer; }
+  table.tv tbody tr:hover{ background:var(--surface-2); }
+  table.tv tbody tr.current{ background:var(--accent-soft); }
+  table.tv tbody tr:last-child td{ border-bottom:none; }
+
+  [hidden]{ display:none !important; }
+
+  @media (max-width:640px){
+    .builder-layout{ flex-direction:column; }
+    .palette{ flex-direction:row; flex-wrap:wrap; width:100%; }
+    .palette-item{ flex:1 1 calc(33% - 10px); justify-content:center; padding:8px 6px; gap:6px; font-size:.78rem; }
+    .canvas-wrap{ min-width:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="retour" href="../index.html">← Retour à l'accueil</a>
+
+  <header class="page">
+    <span class="eyebrow">Outil — Logique combinatoire</span>
+    <h1>Simulateur de portes logiques</h1>
+    <p>Choisissez le nombre d'entrées et de sorties, placez vos portes, reliez-les, puis observez l'état logique de chaque signal. La table de vérité de votre circuit se construit automatiquement.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Plan de câblage</h2>
+    <p class="sub">Faites glisser une porte sur le plan (ou cliquez dessus). Cliquez sur une borne de sortie puis sur une borne d'entrée pour les relier. Cliquez sur une entrée (A, B, C…) pour changer sa valeur. Sélectionnez une porte ou un fil puis appuyez sur <kbd>Suppr</kbd> ou sur « Supprimer la sélection ».</p>
+
+    <div class="settings">
+      <div class="stepper">
+        <span id="lbl-in">Nombre d'entrées</span>
+        <div class="stepper-ctrl" role="group" aria-labelledby="lbl-in">
+          <button type="button" id="in-minus" aria-label="Retirer une entrée">−</button>
+          <output id="in-count">2</output>
+          <button type="button" id="in-plus" aria-label="Ajouter une entrée">+</button>
+        </div>
+      </div>
+      <div class="stepper">
+        <span id="lbl-out">Nombre de sorties</span>
+        <div class="stepper-ctrl" role="group" aria-labelledby="lbl-out">
+          <button type="button" id="out-minus" aria-label="Retirer une sortie">−</button>
+          <output id="out-count">1</output>
+          <button type="button" id="out-plus" aria-label="Ajouter une sortie">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="builder-layout">
+      <div class="palette">
+        <div class="palette-item" data-type="AND" draggable="true"><span class="palette-swatch">&amp;</span> ET</div>
+        <div class="palette-item" data-type="OR" draggable="true"><span class="palette-swatch">≥1</span> OU</div>
+        <div class="palette-item" data-type="NOT" draggable="true"><span class="palette-swatch">1</span> NON</div>
+        <div class="palette-item" data-type="NAND" draggable="true"><span class="palette-swatch">⊼</span> NON ET</div>
+        <div class="palette-item" data-type="NOR" draggable="true"><span class="palette-swatch">⊽</span> NON OU</div>
+        <div class="palette-item" data-type="XOR" draggable="true"><span class="palette-swatch">⊕</span> OU EXCL.</div>
+        <div class="palette-item" data-type="XNOR" draggable="true"><span class="palette-swatch">⊙</span> NON OU EX.</div>
+      </div>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <svg id="canvas-svg" viewBox="0 0 760 360" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--signal-on)"></i> signal = 1</span>
+      <span><i style="background:var(--signal-off)"></i> signal = 0 / borne non reliée</span>
+      <span>Le petit rond au-dessus de chaque porte indique l'état de sa sortie</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="btn-delete" disabled>Supprimer la sélection</button>
+      <button class="btn btn-ghost" id="btn-reset-inputs">Mettre les entrées à 0</button>
+      <button class="btn btn-ghost" id="btn-clear">Effacer le circuit</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Table de vérité du circuit</h2>
+    <p class="sub">Calculée à partir de votre câblage pour toutes les combinaisons d'entrées. La ligne surlignée correspond aux valeurs actuelles ; cliquez sur une ligne pour appliquer ses valeurs au circuit.</p>
+    <div class="table-scroll">
+      <table class="tv" id="truth-table"></table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById('canvas-svg');
+  var canvasWrap = document.getElementById('canvas-wrap');
+
+  var MIN_IN = 1, MAX_IN = 6, MIN_OUT = 1, MAX_OUT = 4;
+  var W = 760, H = 360;
+  var TERM_W = 84, TERM_H = 48;
+  var IN_LETTERS = 'ABCDEF';
+
+  var state = {
+    nIn: 2,
+    nOut: 1,
+    values: [0,0,0,0,0,0],
+    gates: [],      // {id, type, x, y}
+    wires: [],      // {id, from:{node}, to:{node, pin}}
+    nextId: 1,
+    pending: null,  // {node, pin, kind:'in'|'out'}
+    selected: null  // {kind:'gate'|'wire', id}
+  };
+
+  /* Symboles norme IEC : blocs carrés, bulle de négation pour les portes inversées */
+  var GATE_INFO = {
+    AND:  { symbol:'&',  bubble:false, pins:2 },
+    OR:   { symbol:'≥1', bubble:false, pins:2 },
+    NOT:  { symbol:'1',  bubble:true,  pins:1 },
+    NAND: { symbol:'&',  bubble:true,  pins:2 },
+    NOR:  { symbol:'≥1', bubble:true,  pins:2 },
+    XOR:  { symbol:'=1', bubble:false, pins:2 },
+    XNOR: { symbol:'=1', bubble:true,  pins:2 }
+  };
+  var GATE_W = 64, GATE_H = 64, BUBBLE_R = 5;
+
+  /* ---------- Identifiants des bornes ---------- */
+  function inId(i){ return 'IN' + i; }
+  function outId(i){ return 'OUT' + i; }
+  function isIn(id){ return /^IN\d$/.test(id); }
+  function isOut(id){ return /^OUT\d$/.test(id); }
+  function inLabel(i){ return IN_LETTERS[i]; }
+  function outLabel(i){ return state.nOut === 1 ? 'S' : 'S' + (i+1); }
+
+  /* ---------- Géométrie ---------- */
+  function layoutHeight(){ return Math.max(360, Math.max(state.nIn, state.nOut) * 80); }
+  function termY(i, n){ var step = H / n; return step*i + step/2 - TERM_H/2; }
+  function inTerm(i){ return { x:14, y:termY(i, state.nIn) }; }
+  function outTerm(i){ return { x:W - 14 - TERM_W, y:termY(i, state.nOut) }; }
+  var MIN_GX = 14 + TERM_W + 24;
+  function maxGX(){ return W - 14 - TERM_W - 24 - GATE_W - BUBBLE_R*2; }
+
+  function gateById(id){ return state.gates.find(function(g){ return g.id === id; }); }
+
+  function outPinPos(nodeId){
+    if(isIn(nodeId)){ var t = inTerm(+nodeId.slice(2)); return { x:t.x + TERM_W, y:t.y + TERM_H/2 }; }
+    var g = gateById(nodeId);
+    if(!g) return {x:0,y:0};
+    var x = g.x + GATE_W + (GATE_INFO[g.type].bubble ? BUBBLE_R*2 : 0);
+    return { x:x, y:g.y + GATE_H/2 };
+  }
+  function inPinPos(nodeId, pin){
+    if(isOut(nodeId)){ var t = outTerm(+nodeId.slice(3)); return { x:t.x, y:t.y + TERM_H/2 }; }
+    var g = gateById(nodeId);
+    if(!g) return {x:0,y:0};
+    if(GATE_INFO[g.type].pins === 1) return { x:g.x, y:g.y + GATE_H/2 };
+    return { x:g.x, y:g.y + (pin===0 ? GATE_H*0.28 : GATE_H*0.72) };
+  }
+
+  function wireInto(nodeId, pin){
+    return state.wires.find(function(w){ return w.to.node===nodeId && w.to.pin===pin; });
+  }
+
+  /* ---------- Évaluation ---------- */
+  // "path" contient les nœuds en cours d'évaluation : protège des boucles
+  // sans empêcher un même signal d'alimenter plusieurs portes.
+  function evalNode(nodeId, vals, path){
+    path = path || {};
+    if(isIn(nodeId)) return vals[+nodeId.slice(2)] ? 1 : 0;
+    if(path[nodeId]) return 0;
+    path[nodeId] = true;
+    var result = 0;
+    if(isOut(nodeId)){
+      var w = wireInto(nodeId, 0);
+      result = w ? evalNode(w.from.node, vals, path) : 0;
+    } else {
+      var g = gateById(nodeId);
+      if(g){
+        var a = inputAt(nodeId, 0, vals, path);
+        var b = GATE_INFO[g.type].pins === 2 ? inputAt(nodeId, 1, vals, path) : 0;
+        switch(g.type){
+          case 'AND':  result = (a && b) ? 1 : 0; break;
+          case 'OR':   result = (a || b) ? 1 : 0; break;
+          case 'NOT':  result = a ? 0 : 1; break;
+          case 'NAND': result = (a && b) ? 0 : 1; break;
+          case 'NOR':  result = (a || b) ? 0 : 1; break;
+          case 'XOR':  result = (a !== b) ? 1 : 0; break;
+          case 'XNOR': result = (a === b) ? 1 : 0; break;
+        }
+      }
+    }
+    delete path[nodeId];
+    return result;
+  }
+  function inputAt(nodeId, pin, vals, path){
+    var w = wireInto(nodeId, pin);
+    return w ? evalNode(w.from.node, vals, path) : 0;
+  }
+
+  /* ---------- Dessin ---------- */
+  function svgEl(tag, attrs){
+    var el = document.createElementNS(SVGNS, tag);
+    for(var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function svgText(attrs, content){ var t = svgEl('text', attrs); t.textContent = content; return t; }
+
+  function valueBadge(cx, cy, r, val, fontSize){
+    var g = svgEl('g', {});
+    g.appendChild(svgEl('circle', {cx:cx, cy:cy, r:r,
+      fill: val ? 'var(--signal-on)' : 'var(--surface)',
+      stroke: val ? 'var(--signal-on)' : 'var(--border)', 'stroke-width':2}));
+    g.appendChild(svgText({x:cx, y:cy + fontSize*0.36, 'text-anchor':'middle',
+      'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':fontSize,
+      fill: val ? '#fff' : 'var(--text-muted)'}, String(val)));
+    return g;
+  }
+
+  function render(){
+    H = layoutHeight();
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = '';
+    var vals = state.values;
+
+    // fils (derrière les portes) — segments horizontaux / verticaux
+    state.wires.forEach(function(w){
+      var p1 = outPinPos(w.from.node), p2 = inPinPos(w.to.node, w.to.pin);
+      var val = evalNode(w.from.node, vals);
+      var selected = state.selected && state.selected.kind==='wire' && state.selected.id===w.id;
+      var midX = (p1.x + p2.x) / 2;
+      var pts = (p1.y === p2.y)
+        ? (p1.x+','+p1.y+' '+p2.x+','+p2.y)
+        : (p1.x+','+p1.y+' '+midX+','+p1.y+' '+midX+','+p2.y+' '+p2.x+','+p2.y);
+      var poly = svgEl('polyline', {
+        points:pts, fill:'none',
+        stroke: selected ? 'var(--accent)' : (val ? 'var(--signal-on)' : 'var(--signal-off)'),
+        'stroke-width': selected ? 4 : 3, 'stroke-linecap':'round', 'stroke-linejoin':'round',
+        style:'cursor:pointer'
+      });
+      // zone de clic élargie pour sélectionner facilement un fil
+      var hit = svgEl('polyline', {points:pts, fill:'none', stroke:'transparent', 'stroke-width':14, style:'cursor:pointer'});
+      [poly, hit].forEach(function(p){ p.addEventListener('click', function(e){ e.stopPropagation(); select('wire', w.id); }); });
+      svg.appendChild(poly); svg.appendChild(hit);
+    });
+
+    // entrées
+    for(var i=0; i<state.nIn; i++){ drawInput(i); }
+
+    // portes
+    state.gates.forEach(drawGate);
+
+    // sorties
+    for(var j=0; j<state.nOut; j++){ drawOutput(j); }
+
+    renderTruthTable();
+    updateButtons();
+  }
+
+  function drawInput(i){
+    var t = inTerm(i), id = inId(i), val = state.values[i];
+    var g = svgEl('g', {style:'cursor:pointer'});
+    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:10,
+      fill:'var(--gate-and-soft)', stroke:'var(--gate-and)', 'stroke-width':1.5}));
+    g.appendChild(svgText({x:t.x+16, y:t.y+TERM_H/2+6, 'font-family':'IBM Plex Mono, monospace',
+      'font-weight':700, 'font-size':18, fill:'var(--text)'}, inLabel(i)));
+    g.appendChild(valueBadge(t.x+TERM_W-22, t.y+TERM_H/2, 11, val, 11));
+    g.addEventListener('click', function(e){ e.stopPropagation(); state.values[i] = val ? 0 : 1; render(); });
+    svg.appendChild(g);
+
+    var op = outPinPos(id);
+    var pending = state.pending && state.pending.node===id;
+    var pin = svgEl('circle', {cx:op.x, cy:op.y, r:7,
+      fill: pending ? 'var(--accent)' : (val ? 'var(--signal-on)' : 'var(--surface)'),
+      stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});
+    pin.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(id, 'out', 0); });
+    svg.appendChild(pin);
+  }
+
+  function drawOutput(i){
+    var t = outTerm(i), id = outId(i);
+    var val = evalNode(id, state.values);
+    var g = svgEl('g', {});
+    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:10,
+      fill:'var(--surface-2)', stroke:'var(--accent)', 'stroke-width':1.75}));
+    g.appendChild(svgText({x:t.x+18, y:t.y+TERM_H/2+6, 'font-family':'IBM Plex Mono, monospace',
+      'font-weight':700, 'font-size':16, fill:'var(--text)'}, outLabel(i)));
+    g.appendChild(valueBadge(t.x+TERM_W-22, t.y+TERM_H/2, 11, val, 11));
+    svg.appendChild(g);
+
+    var ip = inPinPos(id, 0);
+    var pendingHere = state.pending && state.pending.node===id;
+    var wired = !!wireInto(id, 0);
+    var c = svgEl('circle', {cx:ip.x, cy:ip.y, r:7,
+      fill: pendingHere ? 'var(--accent)' : 'var(--surface)',
+      stroke: pendingHere || wired ? 'var(--accent)' : 'var(--bad)',
+      'stroke-width':2, 'stroke-dasharray': wired ? 'none' : '3,2', style:'cursor:crosshair'});
+    c.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(id, 'in', 0); });
+    svg.appendChild(c);
+  }
+
+  function drawGate(g){
+    var info = GATE_INFO[g.type];
+    var selected = state.selected && state.selected.kind==='gate' && state.selected.id===g.id;
+    var strokeColor = selected ? 'var(--accent)' : 'var(--text)';
+    var outVal = evalNode(g.id, state.values);
+
+    var grp = svgEl('g', {});
+    grp.appendChild(svgEl('rect', {x:g.x, y:g.y, width:GATE_W, height:GATE_H, rx:4,
+      fill:'var(--surface)', stroke:strokeColor, 'stroke-width': selected ? 3 : 1.75, style:'cursor:move'}));
+    grp.appendChild(svgText({x:g.x+GATE_W/2, y:g.y+GATE_H/2+6, 'text-anchor':'middle',
+      'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':17, fill:'var(--text)',
+      style:'cursor:move'}, info.symbol));
+    if(info.bubble){
+      grp.appendChild(svgEl('circle', {cx:g.x+GATE_W+BUBBLE_R, cy:g.y+GATE_H/2, r:BUBBLE_R,
+        fill:'var(--surface)', stroke:strokeColor, 'stroke-width':1.75}));
+    }
+    grp.appendChild(valueBadge(g.x+GATE_W/2, g.y-13, 8, outVal, 9.5));
+    grp.addEventListener('pointerdown', function(e){ startDragGate(e, g.id); });
+    grp.addEventListener('click', function(e){ e.stopPropagation(); if(!draggedThisGesture) select('gate', g.id); });
+    svg.appendChild(grp);
+
+    var pins = info.pins === 1 ? [0] : [0,1];
+    pins.forEach(function(pin){
+      var ip = inPinPos(g.id, pin);
+      var w = wireInto(g.id, pin);
+      var pinVal = w ? evalNode(w.from.node, state.values) : 0;
+      var pendingHere = state.pending && state.pending.node===g.id && state.pending.pin===pin && state.pending.kind==='in';
+      var c = svgEl('circle', {cx:ip.x, cy:ip.y, r:6,
+        fill: pendingHere ? 'var(--accent)' : (w ? (pinVal ? 'var(--signal-on)' : 'var(--signal-off)') : 'var(--surface)'),
+        stroke: pendingHere ? 'var(--accent)' : (w ? strokeColor : 'var(--bad)'),
+        'stroke-width':2, 'stroke-dasharray': w ? 'none' : '3,2', style:'cursor:crosshair'});
+      c.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(g.id, 'in', pin); });
+      svg.appendChild(c);
+    });
+
+    var op = outPinPos(g.id);
+    var pendingOut = state.pending && state.pending.node===g.id && state.pending.kind==='out';
+    var oc = svgEl('circle', {cx:op.x, cy:op.y, r:6,
+      fill: pendingOut ? 'var(--accent)' : (outVal ? 'var(--signal-on)' : 'var(--surface)'),
+      stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});
+    oc.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(g.id, 'out', 0); });
+    svg.appendChild(oc);
+  }
+
+  /* ---------- Table de vérité ---------- */
+  var table = document.getElementById('truth-table');
+  function renderTruthTable(){
+    var nIn = state.nIn, nOut = state.nOut;
+    var current = 0;
+    for(var k=0; k<nIn; k++) current = current*2 + (state.values[k] ? 1 : 0);
+
+    var html = '<thead><tr>';
+    for(var i=0; i<nIn; i++) html += '<th>' + inLabel(i) + '</th>';
+    for(var j=0; j<nOut; j++) html += '<th' + (j===0 ? ' class="sep"' : '') + '>' + outLabel(j) + '</th>';
+    html += '</tr></thead><tbody>';
+
+    var rows = 1 << nIn;
+    for(var r=0; r<rows; r++){
+      var vals = [];
+      for(var b=0; b<nIn; b++) vals.push((r >> (nIn-1-b)) & 1);
+      html += '<tr data-row="' + r + '"' + (r===current ? ' class="current"' : '') + '>';
+      vals.forEach(function(v){ html += '<td>' + v + '</td>'; });
+      for(var o=0; o<nOut; o++){
+        var v = evalNode(outId(o), vals);
+        html += '<td class="out ' + (v ? 'one' : 'zero') + (o===0 ? ' sep' : '') + '">' + v + '</td>';
+      }
+      html += '</tr>';
+    }
+    table.innerHTML = html + '</tbody>';
+  }
+  table.addEventListener('click', function(e){
+    var tr = e.target.closest('tr[data-row]');
+    if(!tr) return;
+    var r = +tr.getAttribute('data-row');
+    for(var b=0; b<state.nIn; b++) state.values[b] = (r >> (state.nIn-1-b)) & 1;
+    render();
+  });
+
+  /* ---------- Sélection et câblage ---------- */
+  function select(kind, id){ state.selected = {kind:kind, id:id}; render(); }
+
+  function pinClicked(node, kind, pin){
+    var p = state.pending;
+    if(!p || p.kind === kind){
+      // premier clic, ou deuxième clic sur une borne du même type : on (re)part de celle-ci
+      state.pending = (p && p.node===node && p.pin===pin) ? null : {node:node, pin:pin, kind:kind};
+      render();
+      return;
+    }
+    var from = p.kind === 'out' ? p : {node:node};
+    var to   = p.kind === 'in'  ? p : {node:node, pin:pin};
+    if(from.node !== to.node){
+      // une seule connexion par borne d'entrée
+      state.wires = state.wires.filter(function(w){ return !(w.to.node===to.node && w.to.pin===to.pin); });
+      state.wires.push({ id:'w'+(state.nextId++), from:{node:from.node}, to:{node:to.node, pin:to.pin} });
+    }
+    state.pending = null;
+    render();
+  }
+
+  function deleteSelected(){
+    if(!state.selected) return;
+    var id = state.selected.id;
+    if(state.selected.kind === 'gate'){
+      state.gates = state.gates.filter(function(g){ return g.id !== id; });
+      state.wires = state.wires.filter(function(w){ return w.from.node!==id && w.to.node!==id; });
+    } else {
+      state.wires = state.wires.filter(function(w){ return w.id !== id; });
+    }
+    state.selected = null;
+    render();
+  }
+
+  /* ---------- Déplacement des portes ---------- */
+  var dragging = null, draggedThisGesture = false;
+  function svgPoint(evt){
+    var rect = svg.getBoundingClientRect();
+    return { x:(evt.clientX - rect.left) * (W / rect.width), y:(evt.clientY - rect.top) * (H / rect.height) };
+  }
+  function clampGate(x, y){
+    return { x:Math.max(MIN_GX, Math.min(maxGX(), x)), y:Math.max(26, Math.min(H - GATE_H - 4, y)) };
+  }
+  function startDragGate(e, id){
+    e.stopPropagation();
+    draggedThisGesture = false;
+    var g = gateById(id), pt = svgPoint(e);
+    dragging = { id:id, dx:pt.x - g.x, dy:pt.y - g.y, sx:e.clientX, sy:e.clientY };
+    window.addEventListener('pointermove', onDragMove);
+    window.addEventListener('pointerup', onDragEnd);
+  }
+  function onDragMove(e){
+    if(!dragging) return;
+    if(!draggedThisGesture && Math.abs(e.clientX-dragging.sx) + Math.abs(e.clientY-dragging.sy) < 4) return;
+    draggedThisGesture = true;
+    var g = gateById(dragging.id);
+    if(!g) return;
+    var pt = svgPoint(e), c = clampGate(pt.x - dragging.dx, pt.y - dragging.dy);
+    g.x = c.x; g.y = c.y;
+    render();
+  }
+  function onDragEnd(){
+    dragging = null;
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+  }
+
+  svg.addEventListener('click', function(){ state.pending = null; state.selected = null; render(); });
+
+  /* ---------- Ajout de portes : glisser depuis la palette ou cliquer ---------- */
+  var placeCounter = 0;
+  function addGate(type, x, y){
+    if(x == null){
+      var cols = 3;
+      x = MIN_GX + 40 + (placeCounter % cols) * 150 + GATE_W/2;
+      y = 70 + (Math.floor(placeCounter / cols) % 3) * 110;
+      placeCounter++;
+    }
+    var c = clampGate(x - GATE_W/2, y - GATE_H/2);
+    state.gates.push({ id:'g'+(state.nextId++), type:type, x:c.x, y:c.y });
+    render();
+  }
+  document.querySelectorAll('.palette-item').forEach(function(item){
+    item.addEventListener('dragstart', function(e){
+      e.dataTransfer.setData('text/plain', item.getAttribute('data-type'));
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    item.addEventListener('click', function(){ addGate(item.getAttribute('data-type')); });
+  });
+  canvasWrap.addEventListener('dragover', function(e){ e.preventDefault(); });
+  canvasWrap.addEventListener('drop', function(e){
+    e.preventDefault();
+    var type = e.dataTransfer.getData('text/plain');
+    if(!GATE_INFO[type]) return;
+    var pt = svgPoint(e);
+    addGate(type, pt.x, pt.y);
+  });
+
+  window.addEventListener('keydown', function(e){
+    if(e.key !== 'Delete' && e.key !== 'Backspace') return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if(!state.selected) return;
+    e.preventDefault();
+    deleteSelected();
+  });
+
+  /* ---------- Nombre d'entrées / sorties ---------- */
+  var el = {
+    inCount: document.getElementById('in-count'),
+    outCount: document.getElementById('out-count'),
+    inMinus: document.getElementById('in-minus'),
+    inPlus: document.getElementById('in-plus'),
+    outMinus: document.getElementById('out-minus'),
+    outPlus: document.getElementById('out-plus'),
+    del: document.getElementById('btn-delete')
+  };
+  function setCounts(nIn, nOut){
+    state.nIn = Math.max(MIN_IN, Math.min(MAX_IN, nIn));
+    state.nOut = Math.max(MIN_OUT, Math.min(MAX_OUT, nOut));
+    // retire les fils reliés à des bornes qui n'existent plus
+    state.wires = state.wires.filter(function(w){
+      if(isIn(w.from.node) && +w.from.node.slice(2) >= state.nIn) return false;
+      if(isOut(w.to.node) && +w.to.node.slice(3) >= state.nOut) return false;
+      return true;
+    });
+    for(var i=state.nIn; i<MAX_IN; i++) state.values[i] = 0;
+    state.pending = null;
+    H = layoutHeight();
+    state.gates.forEach(function(g){ var c = clampGate(g.x, g.y); g.x = c.x; g.y = c.y; });
+    render();
+  }
+  function updateButtons(){
+    el.inCount.textContent = state.nIn;
+    el.outCount.textContent = state.nOut;
+    el.inMinus.disabled = state.nIn <= MIN_IN;
+    el.inPlus.disabled = state.nIn >= MAX_IN;
+    el.outMinus.disabled = state.nOut <= MIN_OUT;
+    el.outPlus.disabled = state.nOut >= MAX_OUT;
+    el.del.disabled = !state.selected;
+  }
+  el.inMinus.addEventListener('click', function(){ setCounts(state.nIn-1, state.nOut); });
+  el.inPlus.addEventListener('click', function(){ setCounts(state.nIn+1, state.nOut); });
+  el.outMinus.addEventListener('click', function(){ setCounts(state.nIn, state.nOut-1); });
+  el.outPlus.addEventListener('click', function(){ setCounts(state.nIn, state.nOut+1); });
+
+  el.del.addEventListener('click', deleteSelected);
+  document.getElementById('btn-reset-inputs').addEventListener('click', function(){
+    for(var i=0; i<MAX_IN; i++) state.values[i] = 0;
+    render();
+  });
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    state.gates = []; state.wires = []; state.selected = null; state.pending = null; placeCounter = 0;
+    render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
