@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GreenBox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF3EE;
+    --panel:#FFFFFF;
+    --panel-2:#E4ECE6;
+    --bezel:#D7E2DA;
+    --ink:#16261D;
+    --ink-muted:#55695C;
+    --line:#C9D7CC;
+    --accent:#1F8A55;
+    --accent-strong:#146B41;
+    --accent-ink:#FFFFFF;
+    --amber:#B96A17;
+    --red:#B23327;
+    --blue:#1D6693;
+    --mono-bg:#0F1B14;
+    --mono-ink:#8FE3B0;
+    --mono-ink-dim:#4E7A62;
+    --ok-bg:#E4F5EA;
+    --ok-ink:#146B41;
+    --bad-bg:#FBEBE9;
+    --bad-ink:#9A2E23;
+    --shadow:0 1px 2px rgba(20,40,25,.08), 0 10px 28px -14px rgba(20,40,25,.30);
+    --radius-panel:20px;
+    --radius-control:10px;
+    --font-display:'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    --font-body:'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1712;
+      --panel:#16211B;
+      --panel-2:#1D2A22;
+      --bezel:#25352B;
+      --ink:#E7F1E9;
+      --ink-muted:#96AC9E;
+      --line:#2B3B31;
+      --accent:#48C585;
+      --accent-strong:#63D89B;
+      --accent-ink:#08150E;
+      --amber:#E3A24C;
+      --red:#E8695F;
+      --blue:#6EB3E6;
+      --mono-bg:#081109;
+      --mono-ink:#7BE3A6;
+      --mono-ink-dim:#3C5C49;
+      --ok-bg:#132A1D;
+      --ok-ink:#7BE3A6;
+      --bad-bg:#301B18;
+      --bad-ink:#E8695F;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.65);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1712;
+    --panel:#16211B;
+    --panel-2:#1D2A22;
+    --bezel:#25352B;
+    --ink:#E7F1E9;
+    --ink-muted:#96AC9E;
+    --line:#2B3B31;
+    --accent:#48C585;
+    --accent-strong:#63D89B;
+    --accent-ink:#08150E;
+    --amber:#E3A24C;
+    --red:#E8695F;
+    --blue:#6EB3E6;
+    --mono-bg:#081109;
+    --mono-ink:#7BE3A6;
+    --mono-ink-dim:#3C5C49;
+    --ok-bg:#132A1D;
+    --ok-ink:#7BE3A6;
+    --bad-bg:#301B18;
+    --bad-ink:#E8695F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.65);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 90% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+    padding-inline:20px;
+    padding-block:28px;
+  }
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0;}
+  ::selection{background:color-mix(in srgb, var(--accent) 35%, transparent);}
+  button{font-family:inherit;}
+
+  .wrap{max-width:920px; margin-inline:auto; display:flex; flex-direction:column; gap:20px;}
+
+  /* ---------- Header ---------- */
+  .masthead{display:flex; flex-direction:column; gap:14px;}
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-strong); font-weight:600;
+  }
+  .title-row{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+  .title-row h1{font-size:clamp(34px,6vw,52px); font-weight:800; color:var(--ink); letter-spacing:.01em;}
+  .title-row .tag{
+    font-family:var(--font-mono); font-size:13px; color:var(--ink-muted);
+    border:1px solid var(--line); border-radius:999px; padding:4px 12px;
+  }
+  .lede{color:var(--ink-muted); max-width:62ch; font-size:15px;}
+
+  .stepper{display:flex; align-items:center; gap:0; margin-top:4px; flex-wrap:wrap;}
+  .step{display:flex; align-items:center; gap:10px; padding:8px 4px;}
+  .step .dot{
+    width:26px; height:26px; border-radius:50%; flex:none;
+    border:2px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink-muted);
+  }
+  .step .label{font-size:13px; color:var(--ink-muted); white-space:nowrap;}
+  .step.done .dot{border-color:var(--accent); color:var(--accent-strong); background:color-mix(in srgb, var(--accent) 14%, transparent);}
+  .step.active .dot{border-color:var(--accent); background:var(--accent); color:var(--accent-ink);}
+  .step.active .label{color:var(--ink); font-weight:600;}
+  .step-line{width:34px; height:2px; background:var(--line); flex:none;}
+  @media (max-width:560px){ .step .label{display:none;} .step-line{width:18px;} }
+
+  /* ---------- Device panel ---------- */
+  .device{
+    background:var(--panel); border-radius:var(--radius-panel); box-shadow:var(--shadow);
+    border:1px solid var(--line); overflow:hidden;
+  }
+  .bezel{
+    background:var(--bezel); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--ink-muted); letter-spacing:.06em;}
+  .led{
+    width:11px; height:11px; border-radius:50%; flex:none; background:#8a8a8a; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
+    transition:background-color .25s ease, box-shadow .25s ease;
+  }
+  .led.on{box-shadow: 0 0 0 3px color-mix(in srgb, var(--led-color,#8a8a8a) 30%, transparent), inset 0 0 0 1px rgba(0,0,0,.15); background:var(--led-color,#8a8a8a);}
+  .modepick{display:flex; gap:6px; background:var(--panel-2); padding:4px; border-radius:999px; border:1px solid var(--line);}
+  .modepick button{
+    border:none; background:transparent; color:var(--ink-muted); font-size:13px; font-weight:600;
+    padding:7px 14px; border-radius:999px; cursor:pointer; transition:background-color .15s, color .15s;
+  }
+  .modepick button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink);}
+  .modepick button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  .screen{
+    background:var(--mono-bg); color:var(--mono-ink); font-family:var(--font-mono);
+    padding:22px 20px; display:flex; flex-direction:column; gap:8px;
+    background-image: repeating-linear-gradient(180deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 3px);
+  }
+  .screen .caption{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mono-ink-dim);}
+  .screen .code{
+    font-size:clamp(18px,4.4vw,28px); font-weight:600; letter-spacing:.06em; word-break:break-word;
+  }
+  .screen .swatch-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .swatch{width:52px; height:52px; border-radius:8px; border:2px solid rgba(255,255,255,.15); flex:none;}
+
+  .body-pad{padding:20px;}
+  .puzzle-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .puzzle-head h2{font-size:22px; font-weight:700;}
+  .counter{font-family:var(--font-mono); font-size:13px; color:var(--ink-muted);}
+
+  .progress{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;}
+  .progress button{
+    width:20px; height:14px; border-radius:3px; border:1px solid var(--line); background:var(--panel-2);
+    cursor:pointer; padding:0;
+  }
+  .progress button[data-state="ok"]{background:var(--accent); border-color:var(--accent);}
+  .progress button[data-state="err"]{background:var(--red); border-color:var(--red); opacity:.55;}
+  .progress button[aria-current="true"]{outline:2px solid var(--accent-strong); outline-offset:2px;}
+
+  fieldset{border:none; padding:0; margin:0;}
+  label{display:block; font-size:13px; color:var(--ink-muted); margin-bottom:6px; font-weight:500;}
+  .field-row{display:flex; gap:12px; flex-wrap:wrap;}
+  .field{flex:1 1 90px; min-width:80px;}
+  input[type="text"], input[type="number"]{
+    width:100%; font-family:var(--font-mono); font-size:16px; padding:10px 12px;
+    border:1px solid var(--line); border-radius:var(--radius-control); background:var(--panel);
+    color:var(--ink);
+  }
+  input:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .choice-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; margin-top:6px;}
+  .choice{
+    text-align:left; border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    border-radius:var(--radius-control); padding:10px 12px; cursor:pointer; font-size:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .choice .swatch-sm{width:16px; height:16px; border-radius:4px; flex:none; border:1px solid rgba(0,0,0,.15);}
+  .choice[aria-pressed="true"]{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--panel)); font-weight:600;}
+  .choice:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center;}
+  .btn{
+    border-radius:var(--radius-control); padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent;
+  }
+  .btn-primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .btn-primary:hover{background:var(--accent-strong); border-color:var(--accent-strong);}
+  .btn-ghost{background:transparent; color:var(--ink-muted); border-color:var(--line);}
+  .btn-ghost:hover{color:var(--ink); border-color:var(--ink-muted);}
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .btn[disabled]{opacity:.45; cursor:not-allowed;}
+
+  .feedback{
+    margin-top:14px; padding:10px 14px; border-radius:var(--radius-control); font-size:14px; font-weight:500;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.ok{background:var(--ok-bg); color:var(--ok-ink);}
+  .feedback.bad{background:var(--bad-bg); color:var(--bad-ink);}
+  .hint{
+    margin-top:10px; font-size:13px; color:var(--ink-muted); border-left:2px solid var(--line); padding-left:10px;
+    display:none;
+  }
+  .hint.show{display:block;}
+
+  .legend{margin-top:18px; border-top:1px solid var(--line); padding-top:16px;}
+  .legend h3{font-size:14px; font-weight:600; margin-bottom:10px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em;}
+  .legend-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px;}
+  .legend-item{display:flex; gap:10px; align-items:flex-start; font-size:13px;}
+  .legend-item .swatch-sm{width:16px; height:16px; border-radius:4px; margin-top:2px; flex:none; border:1px solid rgba(0,0,0,.15);}
+  .legend-item b{display:block; font-size:13px;}
+  .legend-item span{color:var(--ink-muted);}
+
+  /* ---------- Aide-mémoire ---------- */
+  details.help{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-panel); box-shadow:var(--shadow);
+  }
+  details.help > summary{
+    list-style:none; cursor:pointer; padding:16px 20px; font-weight:700; font-family:var(--font-display); font-size:18px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  details.help > summary::-webkit-details-marker{display:none;}
+  details.help > summary::after{content:"+"; font-family:var(--font-mono); font-size:20px; color:var(--ink-muted);}
+  details.help[open] > summary::after{content:"–";}
+  .help-body{padding:0 20px 20px; display:flex; flex-direction:column; gap:18px;}
+  .table-scroll{overflow-x:auto;}
+  table.ref{border-collapse:collapse; font-family:var(--font-mono); font-size:13px; min-width:100%;}
+  table.ref th, table.ref td{border:1px solid var(--line); padding:6px 9px; text-align:center; font-variant-numeric:tabular-nums;}
+  table.ref th{background:var(--panel-2); color:var(--ink-muted); font-weight:600;}
+
+  footer{color:var(--ink-muted); font-size:13px; max-width:70ch;}
+  footer a{color:inherit;}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a href="../index.html" style="display:inline-block;margin:0 0 12px;color:inherit;opacity:.75;text-decoration:none;font-size:14px;">← Retour à l'accueil</a>
+
+
+  <header class="masthead">
+    <div class="eyebrow">Station de suivi — TP numération / CAN / codage</div>
+    <div class="title-row">
+      <h1>GreenBox</h1>
+      <span class="tag">Décodeur du système</span>
+    </div>
+    <p class="lede">La GreenBox est le prototype de serre connectée suivi pendant toute la séance : un capteur de luminosité, un CAN qui le numérise, et un système qui restitue l'information sous forme de messages et de couleurs codées. Ici, on décode ce que la GreenBox raconte.</p>
+    <div class="stepper" aria-hidden="true">
+      <div class="step done"><span class="dot">1</span><span class="label">Capter (papier)</span></div>
+      <div class="step-line"></div>
+      <div class="step done"><span class="dot">2</span><span class="label">Convertir (CAN, PC)</span></div>
+      <div class="step-line"></div>
+      <div class="step active"><span class="dot">3</span><span class="label">Coder (ici)</span></div>
+    </div>
+  </header>
+
+  <div class="device">
+    <div class="bezel">
+      <div class="brand"><span class="led" id="led"></span> GREENBOX · UNITÉ SERRE-01</div>
+      <div class="modepick" role="tablist" aria-label="Choisir l'activité">
+        <button type="button" role="tab" id="tab-ascii" aria-pressed="true">Messages système</button>
+        <button type="button" role="tab" id="tab-color" aria-pressed="false">Voyant d'état</button>
+        <button type="button" role="tab" id="tab-bonus" aria-pressed="false">Défi bonus</button>
+      </div>
+    </div>
+
+    <div class="screen">
+      <div class="caption" id="screen-caption">Message reçu — décoder</div>
+      <div class="code" id="screen-code">83 69 67</div>
+      <div class="swatch-row" id="screen-swatch-row" hidden>
+        <div class="swatch" id="screen-swatch"></div>
+        <div class="caption" id="screen-swatch-label" style="text-transform:none; letter-spacing:normal; font-size:13px;"></div>
+      </div>
+    </div>
+
+    <div class="body-pad">
+      <div class="puzzle-head">
+        <h2 id="puzzle-title">Décoder le message</h2>
+        <span class="counter" id="puzzle-counter">1 / 6</span>
+      </div>
+
+      <div class="progress" id="progress" role="tablist" aria-label="Progression"></div>
+
+      <p id="bonus-note" class="lede" style="margin:-6px 0 4px; font-size:14px;" hidden>Pour les binômes qui ont terminé les deux premières activités : ici, c'est vous qui codez le message ou la couleur pour la GreenBox — l'exercice inverse du décodage !</p>
+
+      <!-- ASCII form -->
+      <div id="form-ascii">
+        <label for="ascii-answer">Message décodé (majuscules, avec les espaces)</label>
+        <input type="text" id="ascii-answer" autocomplete="off" spellcheck="false" placeholder="Ex. SERRE OK">
+      </div>
+
+      <!-- Bonus form (encode) -->
+      <div id="form-bonus" hidden>
+        <label for="bonus-answer" id="bonus-label">Codes à envoyer</label>
+        <input type="text" id="bonus-answer" autocomplete="off" spellcheck="false" placeholder="Ex. 83 69 82">
+      </div>
+
+      <!-- Color form -->
+      <div id="form-color" hidden>
+        <fieldset>
+          <label>Composantes décimales (0 à 255)</label>
+          <div class="field-row">
+            <div class="field"><label for="c-r" style="margin-bottom:2px;">R</label><input type="number" id="c-r" min="0" max="255"></div>
+            <div class="field"><label for="c-g" style="margin-bottom:2px;">G</label><input type="number" id="c-g" min="0" max="255"></div>
+            <div class="field"><label for="c-b" style="margin-bottom:2px;">B</label><input type="number" id="c-b" min="0" max="255"></div>
+          </div>
+        </fieldset>
+        <fieldset style="margin-top:14px;">
+          <label>Statut correspondant</label>
+          <div class="choice-grid" id="color-choices"></div>
+        </fieldset>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+      <div class="hint" id="hint"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="check-btn">Vérifier</button>
+        <button class="btn btn-ghost" id="hint-btn">Indice</button>
+        <button class="btn btn-ghost" id="next-btn" disabled>Suivant →</button>
+        <button class="btn btn-ghost" id="reset-btn" style="margin-left:auto;">Réinitialiser</button>
+      </div>
+
+      <div class="legend" id="legend-block" hidden>
+        <h3>Légende des statuts GreenBox</h3>
+        <div class="legend-grid" id="legend-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="help">
+    <summary>Aide-mémoire</summary>
+    <div class="help-body">
+      <div>
+        <h3 style="font-size:14px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Chiffres hexadécimaux</h3>
+        <div class="table-scroll">
+          <table class="ref" id="hex-table"></table>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:14px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Table ASCII (caractères utiles ici)</h3>
+        <div class="table-scroll">
+          <table class="ref" id="ascii-table"></table>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    Cette activité prolonge ce que vous venez de faire sur table (numération) et sur PC (CAN) : la même GreenBox qui numérise sa luminosité utilise ensuite ces nombres pour écrire des messages en ASCII et pour piloter son voyant d'état en hexadécimal. Aucune note n'est enregistrée ici — l'activité sert à s'entraîner avant l'évaluation. Terminé les deux premières activités ? L'onglet « Défi bonus » propose l'exercice inverse : coder un message ou une couleur plutôt que les décoder.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ASCII_PUZZLES = [
+    { answer:"SEC",        base:"dec" },
+    { answer:"SERRE",      base:"dec" },
+    { answer:"ALERTE",     base:"hex" },
+    { answer:"SOL SEC",    base:"hex" },
+    { answer:"EAU BASSE",  base:"hex" },
+    { answer:"TEMP HAUTE", base:"hex" }
+  ].map(function(p){
+    var codes = p.answer.split("").map(function(ch){ return ch.charCodeAt(0); });
+    return { answer:p.answer, base:p.base, codes:codes };
+  });
+
+  var STATUS_INFO = {
+    vert:  { label:"Vert — croissance normale",         hex:"#2ECC71", rule:"composante G nettement dominante" },
+    jaune: { label:"Jaune — luminosité faible",         hex:"#F1C40F", rule:"R et G élevés, B faible" },
+    rouge: { label:"Rouge — alerte, sol trop sec",      hex:"#E74C3C", rule:"R dominant, G et B faibles" },
+    bleu:  { label:"Bleu — arrosage automatique actif", hex:"#3498DB", rule:"composante B dominante" }
+  };
+
+  var COLOR_PUZZLES = [
+    { hex:"2ECC71", status:"vert" },
+    { hex:"E74C3C", status:"rouge" },
+    { hex:"3498DB", status:"bleu" },
+    { hex:"F1C40F", status:"jaune" },
+    { hex:"27AE60", status:"vert" },
+    { hex:"C0392B", status:"rouge" },
+    { hex:"2980B9", status:"bleu" },
+    { hex:"F39C12", status:"jaune" }
+  ].map(function(p){
+    var r = parseInt(p.hex.slice(0,2),16), g = parseInt(p.hex.slice(2,4),16), b = parseInt(p.hex.slice(4,6),16);
+    return { hex:p.hex, status:p.status, r:r, g:g, b:b };
+  });
+
+  var BONUS_PUZZLES = [
+    { kind:"ascii", word:"EAU",      base:"dec" },
+    { kind:"color", r:231, g:76,  b:60  },
+    { kind:"ascii", word:"PLANTE",   base:"dec" },
+    { kind:"color", r:52,  g:152, b:219 },
+    { kind:"ascii", word:"CAPTEUR",  base:"hex" },
+    { kind:"color", r:241, g:196, b:15  }
+  ].map(function(p){
+    if(p.kind === "ascii"){
+      var codes = p.word.split("").map(function(ch){ return ch.charCodeAt(0); });
+      return { kind:"ascii", word:p.word, base:p.base, codes:codes };
+    }
+    var hex = [p.r,p.g,p.b].map(function(v){ return v.toString(16).toUpperCase().padStart(2,"0"); }).join("");
+    return { kind:"color", r:p.r, g:p.g, b:p.b, hex:hex };
+  });
+
+  var state = {
+    mode: "ascii",           // ascii | color | bonus
+    index: { ascii:0, color:0, bonus:0 },
+    solved: { ascii:{}, color:{}, bonus:{} },  // index -> "ok" | "err"
+    hintShown: false
+  };
+
+  var el = {};
+  ["led","tab-ascii","tab-color","tab-bonus","screen-caption","screen-code","screen-swatch-row","screen-swatch","screen-swatch-label",
+   "puzzle-title","puzzle-counter","progress","bonus-note","form-ascii","form-color","form-bonus","ascii-answer","bonus-answer","bonus-label","c-r","c-g","c-b","color-choices",
+   "feedback","hint","check-btn","hint-btn","next-btn","reset-btn","legend-block","legend-grid","hex-table","ascii-table"
+  ].forEach(function(id){ el[id.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();})] = document.getElementById(id); });
+
+  function puzzleSet(){
+    if(state.mode === "ascii") return ASCII_PUZZLES;
+    if(state.mode === "color") return COLOR_PUZZLES;
+    return BONUS_PUZZLES;
+  }
+  function curIndex(){ return state.index[state.mode]; }
+  function curSolved(){ return state.solved[state.mode]; }
+  function curPuzzle(){ return puzzleSet()[curIndex()]; }
+
+  function fmtCodes(p){
+    if(p.base === "hex"){
+      return p.codes.map(function(c){ return c.toString(16).toUpperCase().padStart(2,"0"); }).join(" ");
+    }
+    return p.codes.join(" ");
+  }
+
+  function setLed(hex){
+    if(hex){ el.led.style.setProperty("--led-color", hex); el.led.classList.add("on"); }
+    else { el.led.style.removeProperty("--led-color"); el.led.classList.remove("on"); }
+  }
+
+  function render(){
+    var isAscii = state.mode === "ascii";
+    var isColor = state.mode === "color";
+    var isBonus = state.mode === "bonus";
+    el.tabAscii.setAttribute("aria-pressed", isAscii ? "true":"false");
+    el.tabColor.setAttribute("aria-pressed", isColor ? "true":"false");
+    el.tabBonus.setAttribute("aria-pressed", isBonus ? "true":"false");
+    el.formAscii.hidden = !isAscii;
+    el.formColor.hidden = !isColor;
+    el.formBonus.hidden = !isBonus;
+    el.legendBlock.hidden = !isColor;
+    el.bonusNote.hidden = !isBonus;
+
+    var set = puzzleSet(), idx = curIndex(), p = curPuzzle();
+    el.puzzleCounter.textContent = (idx+1) + " / " + set.length;
+
+    // progress dots
+    el.progress.innerHTML = "";
+    set.forEach(function(_,i){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-label", "Défi " + (i+1));
+      if(i === idx) b.setAttribute("aria-current","true");
+      var st = curSolved()[i];
+      if(st) b.setAttribute("data-state", st);
+      b.addEventListener("click", function(){ state.index[state.mode] = i; resetInputs(); render(); });
+      el.progress.appendChild(b);
+    });
+
+    resetFeedback();
+
+    if(isAscii){
+      el.puzzleTitle.textContent = "Décoder le message";
+      el.screenCaption.textContent = p.base === "hex" ? "Message reçu (hexadécimal)" : "Message reçu (décimal)";
+      el.screenCode.textContent = fmtCodes(p);
+      el.screenSwatchRow.hidden = true;
+      setLed(null);
+      el.hint.textContent = "Convertis chaque code en un caractère ASCII. Le code " + (p.base==="hex"?"20":"32") + " correspond à un espace — n'oublie pas de le taper aussi.";
+    } else if(isColor){
+      el.puzzleTitle.textContent = "Décoder le voyant d'état";
+      el.screenCaption.textContent = "Code couleur du voyant";
+      el.screenCode.textContent = "#" + p.hex;
+      el.screenSwatchRow.hidden = false;
+      el.screenSwatch.style.background = "#" + p.hex;
+      el.screenSwatchLabel.textContent = "Aperçu réel de la couleur affichée par le voyant";
+      setLed("#" + p.hex);
+      el.hint.textContent = "Découpe le code en 3 paires (R, G, B) et convertis chaque paire d'hexadécimal en décimal (0 à 255). Compare ensuite avec la légende pour choisir le statut.";
+      buildColorChoices();
+    } else {
+      if(p.kind === "ascii"){
+        el.puzzleTitle.textContent = "Coder un message";
+        el.screenCaption.textContent = "Message à coder (" + (p.base === "hex" ? "hexadécimal" : "décimal") + ")";
+        el.screenCode.textContent = p.word;
+        el.screenSwatchRow.hidden = true;
+        setLed(null);
+        el.bonusLabel.textContent = "Codes à envoyer (" + (p.base === "hex" ? "hexadécimal" : "décimal") + ", séparés par des espaces)";
+        el.bonusAnswer.placeholder = p.base === "hex" ? "Ex. 53 45 43" : "Ex. 83 69 82";
+        el.hint.textContent = "Retrouve le code de chaque lettre dans la table ASCII (aide-mémoire en bas de page). N'oublie pas l'espace entre deux mots s'il y en a un.";
+      } else {
+        el.puzzleTitle.textContent = "Trouver le code couleur";
+        el.screenCaption.textContent = "Composantes reçues (décimal)";
+        el.screenCode.textContent = "R=" + p.r + "  G=" + p.g + "  B=" + p.b;
+        el.screenSwatchRow.hidden = false;
+        el.screenSwatch.style.background = "rgb(" + p.r + "," + p.g + "," + p.b + ")";
+        el.screenSwatchLabel.textContent = "Couleur correspondante (aperçu)";
+        setLed("rgb(" + p.r + "," + p.g + "," + p.b + ")");
+        el.bonusLabel.textContent = "Code hexadécimal (avec ou sans #)";
+        el.bonusAnswer.placeholder = "Ex. 2ECC71";
+        el.hint.textContent = "Convertis chaque composante décimale en hexadécimal (2 chiffres), puis mets les trois côte à côte : R, G, puis B.";
+      }
+    }
+    el.hint.classList.toggle("show", state.hintShown);
+    buildLegend();
+  }
+
+  function buildColorChoices(){
+    el.colorChoices.innerHTML = "";
+    Object.keys(STATUS_INFO).forEach(function(key){
+      var info = STATUS_INFO[key];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "choice";
+      b.setAttribute("aria-pressed","false");
+      b.dataset.status = key;
+      var sw = document.createElement("span");
+      sw.className = "swatch-sm";
+      sw.style.background = info.hex;
+      b.appendChild(sw);
+      var txt = document.createElement("span");
+      txt.textContent = info.label;
+      b.appendChild(txt);
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call(el.colorChoices.children, function(c){ c.setAttribute("aria-pressed","false"); });
+        b.setAttribute("aria-pressed","true");
+      });
+      el.colorChoices.appendChild(b);
+    });
+  }
+
+  function buildLegend(){
+    el.legendGrid.innerHTML = "";
+    Object.keys(STATUS_INFO).forEach(function(key){
+      var info = STATUS_INFO[key];
+      var d = document.createElement("div");
+      d.className = "legend-item";
+      d.innerHTML = '<span class="swatch-sm" style="background:'+info.hex+'"></span><span><b>'+info.label+'</b><span>'+info.rule+'</span></span>';
+      el.legendGrid.appendChild(d);
+    });
+  }
+
+  function resetInputs(){
+    el.asciiAnswer.value = "";
+    el.bonusAnswer.value = "";
+    el.cR.value = ""; el.cG.value = ""; el.cB.value = "";
+    state.hintShown = false;
+  }
+
+  function resetFeedback(){
+    el.feedback.className = "feedback";
+    el.feedback.textContent = "";
+    el.nextBtn.disabled = true;
+    el.checkBtn.disabled = false;
+  }
+
+  function normalize(s){ return s.trim().toUpperCase().replace(/\s+/g," "); }
+
+  function check(){
+    var p = curPuzzle(), correct, msg;
+    if(state.mode === "ascii"){
+      correct = normalize(el.asciiAnswer.value) === p.answer;
+      msg = correct ? "Exact : la GreenBox affiche « " + p.answer + " »." : null;
+    } else if(state.mode === "color"){
+      var r = parseInt(el.cR.value,10), g = parseInt(el.cG.value,10), b = parseInt(el.cB.value,10);
+      var chosen = el.colorChoices.querySelector('[aria-pressed="true"]');
+      var status = chosen ? chosen.dataset.status : null;
+      correct = (r === p.r && g === p.g && b === p.b && status === p.status);
+      msg = correct ? "Exact : ce voyant signale « " + STATUS_INFO[p.status].label + " »." : null;
+    } else if(p.kind === "ascii"){
+      var given = el.bonusAnswer.value.trim().split(/\s+/).filter(Boolean).map(function(tok){
+        var clean = tok.toUpperCase().replace(/^0X/,"");
+        return p.base === "hex" ? clean.padStart(2,"0") : String(parseInt(tok,10));
+      });
+      var expected = p.codes.map(function(c){
+        return p.base === "hex" ? c.toString(16).toUpperCase().padStart(2,"0") : String(c);
+      });
+      correct = given.length === expected.length && given.every(function(v,i){ return v === expected[i]; });
+      msg = correct ? "Bien joué : la GreenBox recevra bien « " + p.word + " »." : null;
+    } else {
+      var giv = el.bonusAnswer.value.trim().toUpperCase().replace(/^#/,"");
+      correct = giv === p.hex;
+      msg = correct ? "Exact : #" + p.hex + " est le bon code pour cette couleur." : null;
+    }
+    curSolved()[curIndex()] = correct ? "ok" : "err";
+    el.feedback.classList.add("show");
+    if(correct){
+      el.feedback.classList.add("ok");
+      el.feedback.classList.remove("bad");
+      el.feedback.textContent = msg;
+      el.nextBtn.disabled = (curIndex() === puzzleSet().length - 1);
+    } else {
+      el.feedback.classList.add("bad");
+      el.feedback.classList.remove("ok");
+      el.feedback.textContent = "Pas encore correct. Vérifie tes conversions et réessaie.";
+    }
+    // refresh dot colors without full re-render (keeps focus)
+    var dots = el.progress.children;
+    var st = curSolved()[curIndex()];
+    if(dots[curIndex()]) dots[curIndex()].setAttribute("data-state", st);
+  }
+
+  function next(){
+    var set = puzzleSet();
+    if(curIndex() < set.length - 1){
+      state.index[state.mode] += 1;
+      resetInputs();
+      render();
+    }
+  }
+
+  function switchMode(mode){
+    if(state.mode === mode) return;
+    state.mode = mode;
+    resetInputs();
+    render();
+  }
+
+  function buildRefTables(){
+    var hexRows = "<tr><th>Hex</th>" + "0123456789ABCDEF".split("").map(function(h){return "<td>"+h+"</td>";}).join("") + "</tr>";
+    hexRows += "<tr><th>Déc.</th>" + Array.from({length:16},function(_,i){return "<td>"+i+"</td>";}).join("") + "</tr>";
+    el.hexTable.innerHTML = hexRows;
+
+    var chars = [{c:"espace",v:32},{c:"0-9",v:"48–57"},{c:"A",v:65},{c:"E",v:69},{c:"L",v:76},{c:"O",v:79},{c:"R",v:82},{c:"S",v:83},{c:"T",v:84},{c:"U",v:85},{c:"Z",v:90}];
+    var head = "<tr><th>Caractère</th>" + chars.map(function(x){return "<td>"+x.c+"</td>";}).join("") + "</tr>";
+    var dec = "<tr><th>Décimal</th>" + chars.map(function(x){return "<td>"+x.v+"</td>";}).join("") + "</tr>";
+    var hex = "<tr><th>Hexa</th>" + chars.map(function(x){
+      if(typeof x.v === "number") return "<td>"+x.v.toString(16).toUpperCase().padStart(2,"0")+"</td>";
+      return "<td>—</td>";
+    }).join("") + "</tr>";
+    el.asciiTable.innerHTML = head + dec + hex;
+  }
+
+  el.tabAscii.addEventListener("click", function(){ switchMode("ascii"); });
+  el.tabColor.addEventListener("click", function(){ switchMode("color"); });
+  el.tabBonus.addEventListener("click", function(){ switchMode("bonus"); });
+  el.checkBtn.addEventListener("click", check);
+  el.nextBtn.addEventListener("click", next);
+  el.hintBtn.addEventListener("click", function(){ state.hintShown = !state.hintShown; el.hint.classList.toggle("show", state.hintShown); });
+  el.resetBtn.addEventListener("click", function(){
+    state.index = { ascii:0, color:0, bonus:0 };
+    state.solved = { ascii:{}, color:{}, bonus:{} };
+    resetInputs();
+    render();
+  });
+  el.asciiAnswer.addEventListener("keydown", function(e){ if(e.key === "Enter"){ check(); } });
+  el.bonusAnswer.addEventListener("keydown", function(e){ if(e.key === "Enter"){ check(); } });
+
+  buildRefTables();
+  resetInputs();
+  render();
+})();
+</script>
+</body>
+</html>

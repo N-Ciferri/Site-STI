@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AccessBox Interactif</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F3EE;
+    --surface:#FFFFFF;
+    --surface-2:#FBFAF7;
+    --text:#1C2024;
+    --text-muted:#5C6470;
+    --border:#DCD6C9;
+    --accent:#1F3864;
+    --accent-soft:#E7ECF4;
+    --gate-and:#2F5496;
+    --gate-and-soft:#DCE6F0;
+    --gate-or:#2E7D32;
+    --gate-or-soft:#E4F1E6;
+    --gate-not:#B8860B;
+    --gate-not-soft:#FBF1D9;
+    --signal-on:#0891A8;
+    --signal-off:#B7BFC9;
+    --good:#2E7D32;
+    --bad:#B03A2E;
+    --shadow: 0 1px 2px rgba(28,32,36,.06), 0 8px 20px -12px rgba(28,32,36,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171B;
+      --surface:#1D2126;
+      --surface-2:#20242A;
+      --text:#E9ECEF;
+      --text-muted:#98A2AD;
+      --border:#31363D;
+      --accent:#7FA3D9;
+      --accent-soft:#22314A;
+      --gate-and:#7FA3D9;
+      --gate-and-soft:#22314A;
+      --gate-or:#79C68A;
+      --gate-or-soft:#1E3324;
+      --gate-not:#E5BB5C;
+      --gate-not-soft:#3A2F13;
+      --signal-on:#3FD3E8;
+      --signal-off:#454C55;
+      --good:#79C68A;
+      --bad:#E58C7E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14171B;
+    --surface:#1D2126;
+    --surface-2:#20242A;
+    --text:#E9ECEF;
+    --text-muted:#98A2AD;
+    --border:#31363D;
+    --accent:#7FA3D9;
+    --accent-soft:#22314A;
+    --gate-and:#7FA3D9;
+    --gate-and-soft:#22314A;
+    --gate-or:#79C68A;
+    --gate-or-soft:#1E3324;
+    --gate-not:#E5BB5C;
+    --gate-not-soft:#3A2F13;
+    --signal-on:#3FD3E8;
+    --signal-off:#454C55;
+    --good:#79C68A;
+    --bad:#E58C7E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline:20px;
+    padding-block:28px 48px;
+  }
+  .wrap{ max-width: 980px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+
+  header.page h1{
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+    font-weight:700;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+    text-wrap:balance;
+  }
+  header.page p{
+    margin:0;
+    color:var(--text-muted);
+    font-size:.98rem;
+    max-width:65ch;
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.72rem;
+    font-weight:600;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:6px;
+    display:block;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    padding:5px;
+    border-radius:12px;
+    width:fit-content;
+  }
+  .tab-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--text-muted);
+    font:inherit;
+    font-weight:600;
+    font-size:.88rem;
+    padding:9px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .tab-btn[aria-selected="true"]{
+    background:var(--surface);
+    color:var(--accent);
+    box-shadow:var(--shadow);
+  }
+  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding: 22px clamp(16px,3vw,28px);
+    box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-size:1.15rem;
+    margin:0 0 4px;
+    font-weight:700;
+  }
+  .panel > .sub{
+    color:var(--text-muted);
+    font-size:.92rem;
+    margin:0 0 18px;
+    max-width:70ch;
+  }
+
+  /* --- Tab 1: conversion checker --- */
+  .conv-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap:14px;
+    align-items:end;
+  }
+  .field label{
+    display:block;
+    font-size:.8rem;
+    font-weight:600;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    font:inherit;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1rem;
+    padding:10px 12px;
+    border-radius:9px;
+    border:1.5px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+  }
+  .field input:focus{ outline:none; border-color:var(--accent); }
+  .field.decimal input{ font-weight:600; color:var(--accent); }
+
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font:inherit;
+    font-weight:600;
+    font-size:.9rem;
+    border-radius:9px;
+    padding:10px 16px;
+    transition: transform .08s ease, filter .15s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{ background:var(--accent); color:var(--surface); }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background:var(--surface-2); color:var(--text); border:1.5px solid var(--border); }
+  .btn-ghost:hover{ background:var(--accent-soft); }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+
+  .result-list{ margin-top:18px; display:flex; flex-direction:column; gap:8px; }
+  .result-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px;
+    border-radius:9px;
+    background:var(--surface-2);
+    border:1.5px solid var(--border);
+    font-size:.92rem;
+  }
+  .result-row.ok{ border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+  .result-row.bad{ border-color: color-mix(in srgb, var(--bad) 45%, var(--border)); }
+  .result-row .mark{
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.8rem; font-weight:700; flex-shrink:0;
+    color:#fff;
+  }
+  .result-row.ok .mark{ background:var(--good); }
+  .result-row.bad .mark{ background:var(--bad); }
+  .result-row .ans{ color:var(--text-muted); }
+  .result-row .ans b{ color:var(--text); font-family:"IBM Plex Mono", monospace; }
+
+  /* --- Tab 2: logigramme builder --- */
+  .builder-layout{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .palette{
+    display:flex;
+    flex-direction: column;
+    align-self:flex-start;
+    gap:10px;
+    flex-wrap:wrap;
+    width: 128px;
+    flex-shrink:0;
+  }
+  .palette-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface-2);
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    padding:8px 12px;
+    cursor:grab;
+    user-select:none;
+    font-size:.85rem;
+    font-weight:600;
+  }
+  .palette-item:active{ cursor:grabbing; }
+  .palette-swatch{
+    width:34px; height:28px;
+    border-radius:5px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:700;
+    font-size:.85rem;
+    color:#fff;
+    flex-shrink:0;
+  }
+  .palette-item[data-type="AND"] .palette-swatch{ background:var(--gate-and); }
+  .palette-item[data-type="OR"] .palette-swatch{ background:var(--gate-or); }
+  .palette-item[data-type="NOT"] .palette-swatch{ background:var(--gate-not); }
+  .palette-item[data-type="NAND"] .palette-swatch{ background:var(--gate-and); }
+  .palette-item[data-type="NOR"] .palette-swatch{ background:var(--gate-or); }
+  .palette-item[data-type="XOR"] .palette-swatch{ background:var(--accent); }
+
+  .canvas-wrap{
+    flex:1;
+    min-width:280px;
+    border:1.5px dashed var(--border);
+    border-radius:12px;
+    background:
+      linear-gradient(var(--surface-2) 1px, transparent 1px) 0 0/100% 30px,
+      var(--surface);
+    overflow:hidden;
+    touch-action:none;
+  }
+  .canvas-wrap svg{ display:block; width:100%; height:auto; }
+
+  .hint{
+    font-size:.8rem;
+    color:var(--text-muted);
+    margin-top:10px;
+  }
+  .legend{ display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; font-size:.8rem; color:var(--text-muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend i{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+
+  .verify-box{
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:var(--surface-2);
+    font-size:.9rem;
+  }
+  .verify-box.ok{ border-color: color-mix(in srgb, var(--good) 50%, var(--border)); background: color-mix(in srgb, var(--good) 10%, var(--surface-2)); }
+  .verify-box.bad{ border-color: color-mix(in srgb, var(--bad) 50%, var(--border)); background: color-mix(in srgb, var(--bad) 8%, var(--surface-2)); }
+  .verify-box ul{ margin:8px 0 0; padding-left:20px; }
+  .verify-box code{ font-family:"IBM Plex Mono", monospace; }
+
+  .rule-box{
+    background:var(--gate-and-soft);
+    border:1.5px solid color-mix(in srgb, var(--gate-and) 35%, transparent);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:.88rem;
+    margin-bottom:16px;
+    color:var(--text);
+  }
+  .rule-box b{ color:var(--accent); }
+
+  [hidden]{ display:none !important; }
+
+  @media (max-width:640px){
+    .palette{ flex-direction:row; width:auto; align-self:stretch; }
+    .palette-item{ flex:1; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <a href="../index.html" style="display:inline-block;margin:0 0 12px;color:inherit;opacity:.75;text-decoration:none;font-size:14px;">← Retour à l'accueil</a>
+
+  <header class="page">
+    <span class="eyebrow">TP — Numération &amp; logique combinatoire</span>
+    <h1>AccessBox — outils interactifs</h1>
+    <p>Vérifiez vos conversions binaire / hexadécimale, puis construisez le logigramme de la règle d'accès en assemblant des portes ET, OU et NON.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Choix de l'outil">
+    <button class="tab-btn" id="tabbtn-conv" role="tab" aria-selected="true" aria-controls="tab-conv">1 · Vérifier une conversion</button>
+    <button class="tab-btn" id="tabbtn-logic" role="tab" aria-selected="false" aria-controls="tab-logic">2 · Construire le logigramme</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <section class="panel" id="tab-conv" role="tabpanel" aria-labelledby="tabbtn-conv">
+    <h2>Vérifier une conversion</h2>
+    <p class="sub">Reprenez un code de l'AccessBox (ou tirez-en un nouveau), convertissez-le vous-même sur votre feuille, puis contrôlez vos réponses ici.</p>
+
+    <div class="conv-grid">
+      <div class="field decimal">
+        <label for="dec-input">Code en décimal</label>
+        <input id="dec-input" type="number" min="0" max="255" value="214" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="bin-input">Votre réponse en binaire</label>
+        <input id="bin-input" type="text" placeholder="ex : 11010110" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="hex-input">Votre réponse en hexadécimal</label>
+        <input id="hex-input" type="text" placeholder="ex : D6" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-check">Vérifier mes réponses</button>
+      <button class="btn btn-ghost" id="btn-random">🎲 Nouveau code aléatoire</button>
+    </div>
+
+    <div class="result-list" id="conv-results" hidden></div>
+  </section>
+
+  <!-- TAB 2 -->
+  <section class="panel" id="tab-logic" role="tabpanel" aria-labelledby="tabbtn-logic" hidden>
+    <h2>Construire le logigramme</h2>
+    <p class="sub">Faites glisser une porte sur le plan de câblage (ou cliquez dessus). Cliquez sur une borne de sortie puis sur une borne d'entrée pour les relier. Cliquez sur une porte ou un fil pour le sélectionner, puis <kbd class="mono">Suppr</kbd> pour l'enlever.</p>
+
+    <div class="rule-box">
+      Règle à câbler : l'<b>Ouverture</b> vaut 1 si (<b>C</b> = code correct <b>OU</b> <b>B</b> = badge détecté) <b>ET</b> <b>N</b> = mode nuit vaut 0.
+    </div>
+
+    <div class="builder-layout">
+      <div class="palette">
+        <div class="palette-item" data-type="AND" draggable="true">
+          <span class="palette-swatch">&amp;</span> ET
+        </div>
+        <div class="palette-item" data-type="OR" draggable="true">
+          <span class="palette-swatch">≥1</span> OU
+        </div>
+        <div class="palette-item" data-type="NOT" draggable="true">
+          <span class="palette-swatch">1</span> NON
+        </div>
+        <div class="palette-item" data-type="NAND" draggable="true">
+          <span class="palette-swatch">⊼</span> NON ET
+        </div>
+        <div class="palette-item" data-type="NOR" draggable="true">
+          <span class="palette-swatch">⊽</span> NON OU
+        </div>
+        <div class="palette-item" data-type="XOR" draggable="true">
+          <span class="palette-swatch">⊕</span> OU EXCL.
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <svg id="canvas-svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--signal-on)"></i> signal = 1</span>
+      <span><i style="background:var(--signal-off)"></i> signal = 0 / borne non reliée</span>
+      <span>Cliquez un bloc <b>C</b>, <b>B</b> ou <b>N</b> pour changer sa valeur</span>
+      <span>Le petit rond au-dessus de chaque porte indique l'état de sa sortie</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-verify">Vérifier mon circuit</button>
+      <button class="btn btn-ghost" id="btn-clear">Effacer le circuit</button>
+    </div>
+
+    <div id="verify-result" hidden></div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Tabs ---------- */
+  var tabConv = document.getElementById('tabbtn-conv');
+  var tabLogic = document.getElementById('tabbtn-logic');
+  var panelConv = document.getElementById('tab-conv');
+  var panelLogic = document.getElementById('tab-logic');
+  function selectTab(which){
+    var convOn = which === 'conv';
+    tabConv.setAttribute('aria-selected', String(convOn));
+    tabLogic.setAttribute('aria-selected', String(!convOn));
+    panelConv.hidden = !convOn;
+    panelLogic.hidden = convOn;
+    if(!convOn){ setTimeout(renderCircuit, 0); }
+  }
+  tabConv.addEventListener('click', function(){ selectTab('conv'); });
+  tabLogic.addEventListener('click', function(){ selectTab('logic'); });
+
+  /* ---------- Tab 1 : conversion checker ---------- */
+  var decInput = document.getElementById('dec-input');
+  var binInput = document.getElementById('bin-input');
+  var hexInput = document.getElementById('hex-input');
+  var resultsBox = document.getElementById('conv-results');
+
+  function normBin(s){ return (s||"").trim().replace(/\s+/g,""); }
+  function normHex(s){ return (s||"").trim().replace(/\s+/g,"").replace(/^0[xX]/,"").toUpperCase(); }
+
+  function makeRow(ok, label, detail){
+    var row = document.createElement('div');
+    row.className = 'result-row ' + (ok ? 'ok' : 'bad');
+    var mark = document.createElement('span');
+    mark.className = 'mark';
+    mark.textContent = ok ? '✓' : '✗';
+    var text = document.createElement('span');
+    text.innerHTML = '<b>' + label + '</b>' + (detail ? ' — ' + detail : '');
+    row.appendChild(mark); row.appendChild(text);
+    return row;
+  }
+
+  document.getElementById('btn-check').addEventListener('click', function(){
+    var dec = parseInt(decInput.value, 10);
+    resultsBox.innerHTML = '';
+    resultsBox.hidden = false;
+
+    if(isNaN(dec) || dec < 0 || dec > 255){
+      resultsBox.appendChild(makeRow(false, 'Code décimal', 'entrez un nombre entier entre 0 et 255'));
+      return;
+    }
+
+    var correctBin = dec.toString(2);
+    var correctHex = dec.toString(16).toUpperCase();
+
+    var bin = normBin(binInput.value);
+    var binValid = /^[01]+$/.test(bin);
+    var binOk = binValid && parseInt(bin, 2) === dec;
+    resultsBox.appendChild(makeRow(
+      binOk, 'Binaire',
+      binOk ? null : (bin ? 'la bonne réponse est <b>' + correctBin + '</b>' : 'champ vide — la bonne réponse est <b>' + correctBin + '</b>')
+    ));
+
+    var hex = normHex(hexInput.value);
+    var hexValid = /^[0-9A-F]+$/.test(hex);
+    var hexOk = hexValid && parseInt(hex, 16) === dec;
+    resultsBox.appendChild(makeRow(
+      hexOk, 'Hexadécimal',
+      hexOk ? null : (hex ? 'la bonne réponse est <b>' + correctHex + '</b>' : 'champ vide — la bonne réponse est <b>' + correctHex + '</b>')
+    ));
+  });
+
+  document.getElementById('btn-random').addEventListener('click', function(){
+    decInput.value = Math.floor(Math.random() * 256);
+    binInput.value = '';
+    hexInput.value = '';
+    resultsBox.hidden = true;
+    resultsBox.innerHTML = '';
+    binInput.focus();
+  });
+
+  /* ---------- Tab 2 : logigramme builder ---------- */
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById('canvas-svg');
+  var canvasWrap = document.getElementById('canvas-wrap');
+
+  var TERMS = {
+    C: { x:14, y:34,  w:92, h:54, label:'C', sub:'code correct' },
+    B: { x:14, y:154, w:92, h:54, label:'B', sub:'badge détecté' },
+    N: { x:14, y:274, w:92, h:54, label:'N', sub:'mode nuit' }
+  };
+  var OUT = { x:534, y:154, w:92, h:54 };
+
+  var state = {
+    values: { C:0, B:0, N:0 },
+    gates: [],      // {id, type:'AND'|'OR'|'NOT', x, y}
+    wires: [],      // {id, from:{node,pin:'out'}, to:{node,pin:0|1}}
+    nextId: 1,
+    pending: null,  // {node, pin, kind:'in'|'out'}
+    selected: null  // {kind:'gate'|'wire', id}
+  };
+
+  /* Symboles norme IEEE/IEC : blocs carrés uniformes, bulle de négation pour les portes inversées */
+  var GATE_INFO = {
+    AND:  { symbol:'&',       bubble:false, w:64, h:64, pins:2 },
+    OR:   { symbol:'≥1', bubble:false, w:64, h:64, pins:2 },
+    NOT:  { symbol:'1',       bubble:true,  w:64, h:64, pins:1 },
+    NAND: { symbol:'&',       bubble:true,  w:64, h:64, pins:2 },
+    NOR:  { symbol:'≥1', bubble:true,  w:64, h:64, pins:2 },
+    XOR:  { symbol:'=1',      bubble:false, w:64, h:64, pins:2 }
+  };
+  var BUBBLE_R = 5;
+
+  function gateSize(type){
+    var info = GATE_INFO[type] || GATE_INFO.AND;
+    return {w:info.w, h:info.h};
+  }
+  function gateById(id){ return state.gates.find(function(g){ return g.id === id; }); }
+
+  function outPinPos(nodeId){
+    if(TERMS[nodeId]){ var t = TERMS[nodeId]; return { x: t.x + t.w, y: t.y + t.h/2 }; }
+    var g = gateById(nodeId);
+    if(!g) return {x:0,y:0};
+    var info = GATE_INFO[g.type];
+    var s = gateSize(g.type);
+    var edgeX = g.x + s.w;
+    var x = info.bubble ? edgeX + BUBBLE_R*2 : edgeX;
+    return { x: x, y: g.y + s.h/2 };
+  }
+  function inPinPos(nodeId, pin){
+    if(nodeId === 'OUT'){ return { x: OUT.x, y: OUT.y + OUT.h/2 }; }
+    var g = gateById(nodeId);
+    if(!g) return {x:0,y:0};
+    var info = GATE_INFO[g.type];
+    var s = gateSize(g.type);
+    if(info.pins === 1){ return { x:g.x, y:g.y + s.h/2 }; }
+    return { x:g.x, y: g.y + (pin===0 ? s.h*0.28 : s.h*0.72) };
+  }
+
+  function wireInto(nodeId, pin){
+    return state.wires.find(function(w){ return w.to.node===nodeId && w.to.pin===pin; });
+  }
+
+  function evalNode(nodeId, overrides, visiting){
+    visiting = visiting || {};
+    if(visiting[nodeId]) return 0; // cycle guard
+    visiting[nodeId] = true;
+
+    if(nodeId === 'C' || nodeId === 'B' || nodeId === 'N'){
+      return overrides[nodeId];
+    }
+    if(nodeId === 'OUT'){
+      var w = wireInto('OUT', 0);
+      return w ? evalNode(w.from.node, overrides, visiting) : 0;
+    }
+    var g = gateById(nodeId);
+    if(!g) return 0;
+    function inputAt(pin){
+      var w = wireInto(nodeId, pin);
+      return w ? evalNode(w.from.node, overrides, visiting) : 0;
+    }
+    if(g.type === 'AND')  return (inputAt(0) && inputAt(1)) ? 1 : 0;
+    if(g.type === 'OR')   return (inputAt(0) || inputAt(1)) ? 1 : 0;
+    if(g.type === 'NOT')  return inputAt(0) ? 0 : 1;
+    if(g.type === 'NAND') return (inputAt(0) && inputAt(1)) ? 0 : 1;
+    if(g.type === 'NOR')  return (inputAt(0) || inputAt(1)) ? 0 : 1;
+    if(g.type === 'XOR')  return (inputAt(0) !== inputAt(1)) ? 1 : 0;
+    return 0;
+  }
+
+  function svgEl(tag, attrs){
+    var el = document.createElementNS(SVGNS, tag);
+    for(var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function renderCircuit(){
+    svg.innerHTML = '';
+    var overrides = state.values;
+
+    // wires (behind gates) — segments uniquement horizontaux / verticaux
+    state.wires.forEach(function(w){
+      var p1 = outPinPos(w.from.node);
+      var p2 = inPinPos(w.to.node, w.to.pin);
+      var val = evalNode(w.from.node, overrides, {});
+      var selected = state.selected && state.selected.kind==='wire' && state.selected.id===w.id;
+      var midX = (p1.x + p2.x) / 2;
+      var pts = (p1.y === p2.y)
+        ? (p1.x+','+p1.y+' '+p2.x+','+p2.y)
+        : (p1.x+','+p1.y+' '+midX+','+p1.y+' '+midX+','+p2.y+' '+p2.x+','+p2.y);
+      var poly = svgEl('polyline', {
+        points: pts,
+        fill:'none',
+        stroke: selected ? 'var(--accent)' : (val ? 'var(--signal-on)' : 'var(--signal-off)'),
+        'stroke-width': selected ? 4 : 3,
+        'stroke-linecap':'round',
+        'stroke-linejoin':'round',
+        style:'cursor:pointer'
+      });
+      poly.addEventListener('click', function(e){ e.stopPropagation(); selectWire(w.id); });
+      svg.appendChild(poly);
+    });
+
+    // terminals C/B/N
+    Object.keys(TERMS).forEach(function(key){
+      var t = TERMS[key];
+      var val = state.values[key];
+      var g = svgEl('g', {style:'cursor:pointer'});
+      g.appendChild(svgEl('rect', {x:t.x,y:t.y,width:t.w,height:t.h,rx:10,
+        fill:'var(--gate-and-soft)', stroke:'var(--gate-and)', 'stroke-width':1.5}));
+      var label = svgEl('text', {x:t.x+14, y:t.y+22, 'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':16, fill:'var(--text)'});
+      label.textContent = t.label;
+      g.appendChild(label);
+      var sub = svgEl('text', {x:t.x+14, y:t.y+38, 'font-family':'IBM Plex Sans, sans-serif', 'font-size':9.5, fill:'var(--text-muted)'});
+      sub.textContent = t.sub;
+      g.appendChild(sub);
+      var badge = svgEl('circle', {cx:t.x+t.w-16, cy:t.y+t.h/2, r:11, fill: val ? 'var(--signal-on)' : 'var(--surface)', stroke: val ? 'var(--signal-on)' : 'var(--border)', 'stroke-width':2});
+      g.appendChild(badge);
+      var vt = svgEl('text', {x:t.x+t.w-16, y:t.y+t.h/2+4, 'text-anchor':'middle', 'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':11, fill: val ? '#fff' : 'var(--text-muted)'});
+      vt.textContent = String(val);
+      g.appendChild(vt);
+      g.addEventListener('click', function(e){ e.stopPropagation(); state.values[key] = state.values[key] ? 0 : 1; renderCircuit(); });
+      svg.appendChild(g);
+
+      // output pin
+      var op = outPinPos(key);
+      var pending = state.pending && state.pending.node===key && state.pending.kind==='out';
+      var pin = svgEl('circle', {cx:op.x, cy:op.y, r:7, fill: pending ? 'var(--accent)' : (val ? 'var(--signal-on)' : 'var(--surface)'), stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});
+      pin.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(key,'out',0); });
+      svg.appendChild(pin);
+    });
+
+    // gates — symboles rectangulaires norme IEEE/IEC, monochromes
+    state.gates.forEach(function(g){
+      var info = GATE_INFO[g.type];
+      var s = gateSize(g.type);
+      var selected = state.selected && state.selected.kind==='gate' && state.selected.id===g.id;
+      var strokeColor = selected ? 'var(--accent)' : 'var(--text)';
+      var outVal = evalNode(g.id, overrides, {});
+
+      var grp = svgEl('g', {});
+
+      // tous les blocs sont des carrés (norme IEEE/IEC), seul le symbole change
+      grp.appendChild(svgEl('rect', {x:g.x, y:g.y, width:s.w, height:s.h, rx:4,
+        fill:'var(--surface)', stroke:strokeColor, 'stroke-width': selected ? 3 : 1.75, style:'cursor:move'}));
+
+      var txt = svgEl('text', {x:g.x+s.w/2, y:g.y+s.h/2+6, 'text-anchor':'middle',
+        'font-family':'IBM Plex Mono, monospace', 'font-weight':700,
+        'font-size': 17, fill:'var(--text)'});
+      txt.textContent = info.symbol;
+      grp.appendChild(txt);
+
+      var edgeX = g.x + s.w;
+      if(info.bubble){
+        grp.appendChild(svgEl('circle', {cx: edgeX + BUBBLE_R, cy: g.y+s.h/2, r:BUBBLE_R,
+          fill:'var(--surface)', stroke:strokeColor, 'stroke-width':1.75}));
+      }
+
+      // pastille d'état de la sortie de CETTE porte
+      var badgeCx = g.x + s.w/2;
+      var badgeCy = g.y - 13;
+      grp.appendChild(svgEl('circle', {cx:badgeCx, cy:badgeCy, r:8,
+        fill: outVal ? 'var(--signal-on)' : 'var(--surface)',
+        stroke: outVal ? 'var(--signal-on)' : 'var(--border)', 'stroke-width':1.75}));
+      var vtxt = svgEl('text', {x:badgeCx, y:badgeCy+3.5, 'text-anchor':'middle',
+        'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':9.5,
+        fill: outVal ? '#fff' : 'var(--text-muted)'});
+      vtxt.textContent = String(outVal);
+      grp.appendChild(vtxt);
+
+      grp.addEventListener('pointerdown', function(e){ startDragGate(e, g.id); });
+      grp.addEventListener('click', function(e){ e.stopPropagation(); if(!draggedThisGesture){ selectGate(g.id); } });
+      svg.appendChild(grp);
+
+      // input pins — colorées selon l'état propagé
+      var pins = info.pins === 1 ? [0] : [0,1];
+      pins.forEach(function(pin){
+        var ip = inPinPos(g.id, pin);
+        var w = wireInto(g.id, pin);
+        var wired = !!w;
+        var pinVal = wired ? evalNode(w.from.node, overrides, {}) : 0;
+        var pendingHere = state.pending && state.pending.node===g.id && state.pending.pin===pin && state.pending.kind==='in';
+        var c = svgEl('circle', {cx: ip.x, cy: ip.y, r:6,
+          fill: pendingHere ? 'var(--accent)' : (wired ? (pinVal ? 'var(--signal-on)' : 'var(--signal-off)') : 'var(--surface)'),
+          stroke: pendingHere ? 'var(--accent)' : (wired ? strokeColor : 'var(--bad)'),
+          'stroke-width':2, 'stroke-dasharray': wired ? 'none':'3,2', style:'cursor:crosshair'});
+        c.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(g.id,'in',pin); });
+        svg.appendChild(c);
+      });
+
+      // output pin (point de connexion)
+      var outp = outPinPos(g.id);
+      var pendingOut = state.pending && state.pending.node===g.id && state.pending.kind==='out';
+      var oc = svgEl('circle', {cx:outp.x, cy:outp.y, r:6,
+        fill: pendingOut ? 'var(--accent)' : (outVal ? 'var(--signal-on)' : 'var(--surface)'),
+        stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});
+      oc.addEventListener('click', function(e){ e.stopPropagation(); pinClicked(g.id,'out',0); });
+      svg.appendChild(oc);
+    });
+
+    // OUTPUT terminal
+    (function(){
+      var val = evalNode('OUT', overrides, {});
+      var g = svgEl('g', {});
+      g.appendChild(svgEl('rect', {x:OUT.x,y:OUT.y,width:OUT.w,height:OUT.h,rx:10, fill:'var(--surface-2)', stroke:'var(--accent)', 'stroke-width':1.75}));
+      var label = svgEl('text', {x:OUT.x+14, y:OUT.y+22, 'font-family':'IBM Plex Sans, sans-serif', 'font-weight':600, 'font-size':12, fill:'var(--text)'});
+      label.textContent = 'Ouverture';
+      g.appendChild(label);
+      var badge = svgEl('circle', {cx:OUT.x+18, cy:OUT.y+38, r:11, fill: val ? 'var(--signal-on)' : 'var(--surface)', stroke: val ? 'var(--signal-on)' : 'var(--border)', 'stroke-width':2});
+      g.appendChild(badge);
+      var vt = svgEl('text', {x:OUT.x+18, y:OUT.y+42, 'text-anchor':'middle', 'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':11, fill: val ? '#fff' : 'var(--text-muted)'});
+      vt.textContent = String(val);
+      g.appendChild(vt);
+      svg.appendChild(g);
+
+      var ip = inPinPos('OUT', 0);
+      var pendingHere = state.pending && state.pending.node==='OUT' && state.pending.kind==='in';
+      var wired = !!wireInto('OUT', 0);
+      var c = svgEl('circle', {cx:ip.x, cy:ip.y, r:7, fill: pendingHere ? 'var(--accent)' : 'var(--surface)', stroke: pendingHere ? 'var(--accent)' : (wired ? 'var(--accent)' : 'var(--bad)'), 'stroke-width':2, 'stroke-dasharray': wired?'none':'3,2', style:'cursor:crosshair'});
+      c.addEventListener('click', function(e){ e.stopPropagation(); pinClicked('OUT','in',0); });
+      svg.appendChild(c);
+    })();
+  }
+
+  function selectGate(id){ state.selected = {kind:'gate', id:id}; renderCircuit(); }
+  function selectWire(id){ state.selected = {kind:'wire', id:id}; renderCircuit(); }
+
+  function pinClicked(node, kind, pin){
+    if(!state.pending){
+      state.pending = {node:node, pin:pin, kind:kind};
+      renderCircuit();
+      return;
+    }
+    if(state.pending.node===node && state.pending.pin===pin && state.pending.kind===kind){
+      state.pending = null; renderCircuit(); return;
+    }
+    if(state.pending.kind === kind){
+      // same kind clicked again: restart pending from the new pin
+      state.pending = {node:node, pin:pin, kind:kind};
+      renderCircuit();
+      return;
+    }
+    var fromSel = state.pending.kind === 'out' ? state.pending : {node:node, pin:pin, kind:'out'};
+    var toSel   = state.pending.kind === 'in'  ? state.pending : {node:node, pin:pin, kind:'in'};
+    // remove any existing wire into that input pin (single input per pin)
+    state.wires = state.wires.filter(function(w){ return !(w.to.node===toSel.node && w.to.pin===toSel.pin); });
+    state.wires.push({ id:'w'+(state.nextId++), from:{node:fromSel.node, pin:'out'}, to:{node:toSel.node, pin:toSel.pin} });
+    state.pending = null;
+    renderCircuit();
+  }
+
+  /* dragging existing gates */
+  var dragging = null; // {id, offsetX, offsetY}
+  var draggedThisGesture = false;
+  function svgPoint(evt){
+    var rect = svg.getBoundingClientRect();
+    var vb = svg.viewBox.baseVal;
+    var x = (evt.clientX - rect.left) * (vb.width / rect.width);
+    var y = (evt.clientY - rect.top) * (vb.height / rect.height);
+    return {x:x, y:y};
+  }
+  function startDragGate(e, id){
+    e.stopPropagation();
+    draggedThisGesture = false;
+    var g = gateById(id);
+    var pt = svgPoint(e);
+    dragging = { id:id, dx: pt.x - g.x, dy: pt.y - g.y };
+    window.addEventListener('pointermove', onDragMove);
+    window.addEventListener('pointerup', onDragEnd);
+  }
+  function onDragMove(e){
+    if(!dragging) return;
+    draggedThisGesture = true;
+    var g = gateById(dragging.id);
+    if(!g) return;
+    var pt = svgPoint(e);
+    var s = gateSize(g.type);
+    g.x = Math.max(120, Math.min(520 - s.w, pt.x - dragging.dx));
+    g.y = Math.max(26, Math.min(360 - s.h - 4, pt.y - dragging.dy));
+    renderCircuit();
+  }
+  function onDragEnd(){
+    dragging = null;
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+  }
+
+  svg.addEventListener('click', function(){ state.pending = null; state.selected = null; renderCircuit(); });
+
+  /* adding gates: drag from palette + click fallback */
+  var placeCounter = 0;
+  function addGate(type, x, y){
+    var s = gateSize(type);
+    if(x == null){
+      x = 220 + (placeCounter % 3) * 110;
+      y = 60 + Math.floor(placeCounter/3) * 120;
+      placeCounter++;
+    }
+    x = Math.max(120, Math.min(520 - s.w, x - s.w/2));
+    y = Math.max(26, Math.min(360 - s.h - 4, y - s.h/2));
+    state.gates.push({ id:'g'+(state.nextId++), type:type, x:x, y:y });
+    renderCircuit();
+  }
+
+  document.querySelectorAll('.palette-item').forEach(function(item){
+    item.addEventListener('dragstart', function(e){
+      e.dataTransfer.setData('text/plain', item.getAttribute('data-type'));
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    item.addEventListener('click', function(){
+      addGate(item.getAttribute('data-type'), null, null);
+    });
+  });
+  canvasWrap.addEventListener('dragover', function(e){ e.preventDefault(); });
+  canvasWrap.addEventListener('drop', function(e){
+    e.preventDefault();
+    var type = e.dataTransfer.getData('text/plain');
+    if(!type) return;
+    var pt = svgPoint(e);
+    addGate(type, pt.x, pt.y);
+  });
+
+  /* delete selected via keyboard */
+  window.addEventListener('keydown', function(e){
+    if(e.key !== 'Delete' && e.key !== 'Backspace') return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if(!state.selected) return;
+    e.preventDefault();
+    if(state.selected.kind === 'gate'){
+      var id = state.selected.id;
+      state.gates = state.gates.filter(function(g){ return g.id !== id; });
+      state.wires = state.wires.filter(function(w){ return w.from.node!==id && w.to.node!==id; });
+    } else if(state.selected.kind === 'wire'){
+      var wid = state.selected.id;
+      state.wires = state.wires.filter(function(w){ return w.id !== wid; });
+    }
+    state.selected = null;
+    renderCircuit();
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    state.gates = []; state.wires = []; state.selected = null; state.pending = null;
+    document.getElementById('verify-result').hidden = true;
+    renderCircuit();
+  });
+
+  document.getElementById('btn-verify').addEventListener('click', function(){
+    var combos = [];
+    for(var c=0;c<2;c++) for(var b=0;b<2;b++) for(var n=0;n<2;n++) combos.push({C:c,B:b,N:n});
+    var fails = [];
+    combos.forEach(function(combo){
+      var got = evalNode('OUT', combo, {});
+      var expected = ((combo.C || combo.B) && !combo.N) ? 1 : 0;
+      if(got !== expected) fails.push({combo:combo, got:got, expected:expected});
+    });
+    var box = document.getElementById('verify-result');
+    box.hidden = false;
+    if(fails.length === 0){
+      box.innerHTML = '<div class="verify-box ok"><b>8 / 8 combinaisons correctes.</b> Votre circuit correspond à la règle de l’AccessBox.</div>';
+    } else {
+      var items = fails.map(function(f){
+        return '<li><code>C='+f.combo.C+', B='+f.combo.B+', N='+f.combo.N+'</code> → votre circuit donne <code>'+f.got+'</code>, attendu <code>'+f.expected+'</code></li>';
+      }).join('');
+      box.innerHTML = '<div class="verify-box bad"><b>'+(8-fails.length)+' / 8 combinaisons correctes.</b> À revoir sur :<ul>'+items+'</ul></div>';
+    }
+  });
+
+  renderCircuit();
+})();
+</script>
+
+</body>
+</html>

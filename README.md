@@ -22,6 +22,6 @@ pages/          → vos pages HTML
 
 Dans le dépôt GitHub : **Settings → Pages → Build and deployment**
 - Source : *Deploy from a branch*
-- Branche : `main` (ou la branche qui contient ces fichiers), dossier `/ (root)`
+- Branche : `main`, dossier `/ (root)`
 
 Le site sera ensuite accessible à l'adresse `https://<votre-nom>.github.io/Site-STI/`.
