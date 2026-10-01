@@ -295,6 +295,9 @@
     XNOR: { symbol:'=1', bubble:true,  pins:2 }
   };
   var GATE_W = 64, GATE_H = 64, BUBBLE_R = 5;
+  // petit fil qui dépasse de la porte : la borne de connexion est au bout,
+  // pour ne pas la confondre avec le rond de négation
+  var STUB = 18;
 
   /* ---------- Identifiants des bornes ---------- */
   function inId(i){ return 'IN' + i; }
@@ -309,8 +312,8 @@
   function termY(i, n){ var step = H / n; return step*i + step/2 - TERM_H/2; }
   function inTerm(i){ return { x:14, y:termY(i, state.nIn) }; }
   function outTerm(i){ return { x:W - 14 - TERM_W, y:termY(i, state.nOut) }; }
-  var MIN_GX = 14 + TERM_W + 24;
-  function maxGX(){ return W - 14 - TERM_W - 24 - GATE_W - BUBBLE_R*2; }
+  var MIN_GX = 14 + TERM_W + 24 + STUB;
+  function maxGX(){ return W - 14 - TERM_W - 24 - GATE_W - BUBBLE_R*2 - STUB; }
 
   function gateById(id){ return state.gates.find(function(g){ return g.id === id; }); }
 
@@ -318,15 +321,15 @@
     if(isIn(nodeId)){ var t = inTerm(+nodeId.slice(2)); return { x:t.x + TERM_W, y:t.y + TERM_H/2 }; }
     var g = gateById(nodeId);
     if(!g) return {x:0,y:0};
-    var x = g.x + GATE_W + (GATE_INFO[g.type].bubble ? BUBBLE_R*2 : 0);
+    var x = g.x + GATE_W + (GATE_INFO[g.type].bubble ? BUBBLE_R*2 : 0) + STUB;
     return { x:x, y:g.y + GATE_H/2 };
   }
   function inPinPos(nodeId, pin){
     if(isOut(nodeId)){ var t = outTerm(+nodeId.slice(3)); return { x:t.x, y:t.y + TERM_H/2 }; }
     var g = gateById(nodeId);
     if(!g) return {x:0,y:0};
-    if(GATE_INFO[g.type].pins === 1) return { x:g.x, y:g.y + GATE_H/2 };
-    return { x:g.x, y:g.y + (pin===0 ? GATE_H*0.28 : GATE_H*0.72) };
+    if(GATE_INFO[g.type].pins === 1) return { x:g.x - STUB, y:g.y + GATE_H/2 };
+    return { x:g.x - STUB, y:g.y + (pin===0 ? GATE_H*0.28 : GATE_H*0.72) };
   }
 
   function wireInto(nodeId, pin){
@@ -497,6 +500,8 @@
       var w = wireInto(g.id, pin);
       var pinVal = w ? evalNode(w.from.node, state.values) : 0;
       var pendingHere = state.pending && state.pending.node===g.id && state.pending.pin===pin && state.pending.kind==='in';
+      svg.appendChild(svgEl('line', {x1:ip.x, y1:ip.y, x2:g.x, y2:ip.y,
+        stroke: w && pinVal ? 'var(--signal-on)' : strokeColor, 'stroke-width':2}));
       var c = svgEl('circle', {cx:ip.x, cy:ip.y, r:6,
         fill: pendingHere ? 'var(--accent)' : (w ? (pinVal ? 'var(--signal-on)' : 'var(--signal-off)') : 'var(--surface)'),
         stroke: pendingHere ? 'var(--accent)' : (w ? strokeColor : 'var(--bad)'),
@@ -507,6 +512,8 @@
 
     var op = outPinPos(g.id);
     var pendingOut = state.pending && state.pending.node===g.id && state.pending.kind==='out';
+    svg.appendChild(svgEl('line', {x1:op.x - STUB, y1:op.y, x2:op.x, y2:op.y,
+      stroke: outVal ? 'var(--signal-on)' : strokeColor, 'stroke-width':2}));
     var oc = svgEl('circle', {cx:op.x, cy:op.y, r:6,
       fill: pendingOut ? 'var(--accent)' : (outVal ? 'var(--signal-on)' : 'var(--surface)'),
       stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});

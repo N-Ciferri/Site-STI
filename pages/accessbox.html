@@ -533,6 +533,11 @@
     XOR:  { symbol:'=1',      bubble:false, w:64, h:64, pins:2 }
   };
   var BUBBLE_R = 5;
+  // petit fil qui dépasse de la porte : la borne de connexion est au bout,
+  // pour ne pas la confondre avec le rond de négation
+  var STUB = 18;
+  var GATE_MIN_X = 106 + 14 + STUB;
+  function gateMaxX(w){ return OUT.x - 14 - STUB - BUBBLE_R*2 - w; }
 
   function gateSize(type){
     var info = GATE_INFO[type] || GATE_INFO.AND;
@@ -547,7 +552,7 @@
     var info = GATE_INFO[g.type];
     var s = gateSize(g.type);
     var edgeX = g.x + s.w;
-    var x = info.bubble ? edgeX + BUBBLE_R*2 : edgeX;
+    var x = (info.bubble ? edgeX + BUBBLE_R*2 : edgeX) + STUB;
     return { x: x, y: g.y + s.h/2 };
   }
   function inPinPos(nodeId, pin){
@@ -556,8 +561,8 @@
     if(!g) return {x:0,y:0};
     var info = GATE_INFO[g.type];
     var s = gateSize(g.type);
-    if(info.pins === 1){ return { x:g.x, y:g.y + s.h/2 }; }
-    return { x:g.x, y: g.y + (pin===0 ? s.h*0.28 : s.h*0.72) };
+    if(info.pins === 1){ return { x:g.x - STUB, y:g.y + s.h/2 }; }
+    return { x:g.x - STUB, y: g.y + (pin===0 ? s.h*0.28 : s.h*0.72) };
   }
 
   function wireInto(nodeId, pin){
@@ -703,6 +708,8 @@
         var wired = !!w;
         var pinVal = wired ? evalNode(w.from.node, overrides, {}) : 0;
         var pendingHere = state.pending && state.pending.node===g.id && state.pending.pin===pin && state.pending.kind==='in';
+        svg.appendChild(svgEl('line', {x1:ip.x, y1:ip.y, x2:g.x, y2:ip.y,
+          stroke: wired && pinVal ? 'var(--signal-on)' : strokeColor, 'stroke-width':2}));
         var c = svgEl('circle', {cx: ip.x, cy: ip.y, r:6,
           fill: pendingHere ? 'var(--accent)' : (wired ? (pinVal ? 'var(--signal-on)' : 'var(--signal-off)') : 'var(--surface)'),
           stroke: pendingHere ? 'var(--accent)' : (wired ? strokeColor : 'var(--bad)'),
@@ -714,6 +721,8 @@
       // output pin (point de connexion)
       var outp = outPinPos(g.id);
       var pendingOut = state.pending && state.pending.node===g.id && state.pending.kind==='out';
+      svg.appendChild(svgEl('line', {x1:outp.x - STUB, y1:outp.y, x2:outp.x, y2:outp.y,
+        stroke: outVal ? 'var(--signal-on)' : strokeColor, 'stroke-width':2}));
       var oc = svgEl('circle', {cx:outp.x, cy:outp.y, r:6,
         fill: pendingOut ? 'var(--accent)' : (outVal ? 'var(--signal-on)' : 'var(--surface)'),
         stroke:'var(--accent)', 'stroke-width':2, style:'cursor:crosshair'});
@@ -798,7 +807,7 @@
     if(!g) return;
     var pt = svgPoint(e);
     var s = gateSize(g.type);
-    g.x = Math.max(120, Math.min(520 - s.w, pt.x - dragging.dx));
+    g.x = Math.max(GATE_MIN_X, Math.min(gateMaxX(s.w), pt.x - dragging.dx));
     g.y = Math.max(26, Math.min(360 - s.h - 4, pt.y - dragging.dy));
     renderCircuit();
   }
@@ -815,11 +824,11 @@
   function addGate(type, x, y){
     var s = gateSize(type);
     if(x == null){
-      x = 220 + (placeCounter % 3) * 110;
+      x = 200 + (placeCounter % 3) * 130;
       y = 60 + Math.floor(placeCounter/3) * 120;
       placeCounter++;
     }
-    x = Math.max(120, Math.min(520 - s.w, x - s.w/2));
+    x = Math.max(GATE_MIN_X, Math.min(gateMaxX(s.w), x - s.w/2));
     y = Math.max(26, Math.min(360 - s.h - 4, y - s.h/2));
     state.gates.push({ id:'g'+(state.nextId++), type:type, x:x, y:y });
     renderCircuit();
