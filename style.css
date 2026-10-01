@@ -63,8 +63,25 @@ main {
   box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
 }
 
-.carte h2 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--accent); }
+.carte h3 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--accent); }
 .carte p { margin: 0; font-size: .95rem; opacity: .8; }
+
+.categorie + .categorie { margin-top: 2.5rem; }
+
+.categorie-titre {
+  margin: 0 0 1rem;
+  padding-bottom: .5rem;
+  font-size: 1.4rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+.vide {
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px dashed var(--bordure);
+  border-radius: 12px;
+  opacity: .7;
+}
 
 footer {
   text-align: center;

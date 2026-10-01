@@ -14,7 +14,7 @@ pages/          → vos pages HTML
 ## Ajouter une page
 
 1. Placez votre fichier `.html` dans `pages/`.
-2. Dans `index.html`, copiez un bloc `<a class="carte">…</a>` et adaptez `href`, le titre et la description.
+2. Dans `index.html`, dans la bonne catégorie (1re IT/I2D ou Terminale 2I2D), copiez un bloc `<a class="carte">…</a>` et adaptez `href`, le titre et la description.
 3. (Optionnel) Ajoutez en haut de votre page un lien de retour :
    `<a class="retour" href="../index.html">← Retour à l'accueil</a>`
 
