@@ -569,31 +569,36 @@
     return state.wires.find(function(w){ return w.to.node===nodeId && w.to.pin===pin; });
   }
 
-  function evalNode(nodeId, overrides, visiting){
-    visiting = visiting || {};
-    if(visiting[nodeId]) return 0; // cycle guard
-    visiting[nodeId] = true;
-
+  // "path" contient les nœuds en cours d'évaluation : protège des boucles
+  // sans empêcher un même signal d'alimenter plusieurs portes.
+  function evalNode(nodeId, overrides, path){
+    path = path || {};
     if(nodeId === 'C' || nodeId === 'B' || nodeId === 'N'){
       return overrides[nodeId];
     }
+    if(path[nodeId]) return 0; // boucle
+    path[nodeId] = true;
+    var result = 0;
     if(nodeId === 'OUT'){
       var w = wireInto('OUT', 0);
-      return w ? evalNode(w.from.node, overrides, visiting) : 0;
+      result = w ? evalNode(w.from.node, overrides, path) : 0;
+    } else {
+      var g = gateById(nodeId);
+      if(g){
+        var inputAt = function(pin){
+          var w = wireInto(nodeId, pin);
+          return w ? evalNode(w.from.node, overrides, path) : 0;
+        };
+        if(g.type === 'AND')  result = (inputAt(0) && inputAt(1)) ? 1 : 0;
+        if(g.type === 'OR')   result = (inputAt(0) || inputAt(1)) ? 1 : 0;
+        if(g.type === 'NOT')  result = inputAt(0) ? 0 : 1;
+        if(g.type === 'NAND') result = (inputAt(0) && inputAt(1)) ? 0 : 1;
+        if(g.type === 'NOR')  result = (inputAt(0) || inputAt(1)) ? 0 : 1;
+        if(g.type === 'XOR')  result = (inputAt(0) !== inputAt(1)) ? 1 : 0;
+      }
     }
-    var g = gateById(nodeId);
-    if(!g) return 0;
-    function inputAt(pin){
-      var w = wireInto(nodeId, pin);
-      return w ? evalNode(w.from.node, overrides, visiting) : 0;
-    }
-    if(g.type === 'AND')  return (inputAt(0) && inputAt(1)) ? 1 : 0;
-    if(g.type === 'OR')   return (inputAt(0) || inputAt(1)) ? 1 : 0;
-    if(g.type === 'NOT')  return inputAt(0) ? 0 : 1;
-    if(g.type === 'NAND') return (inputAt(0) && inputAt(1)) ? 0 : 1;
-    if(g.type === 'NOR')  return (inputAt(0) || inputAt(1)) ? 0 : 1;
-    if(g.type === 'XOR')  return (inputAt(0) !== inputAt(1)) ? 1 : 0;
-    return 0;
+    delete path[nodeId];
+    return result;
   }
 
   function svgEl(tag, attrs){
