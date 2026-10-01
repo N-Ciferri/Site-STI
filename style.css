@@ -1,0 +1,83 @@
+:root {
+  --fond: #f4f6fa;
+  --texte: #1f2933;
+  --carte: #ffffff;
+  --accent: #2563eb;
+  --bordure: #dde3ec;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #111827;
+    --texte: #e5e7eb;
+    --carte: #1f2937;
+    --accent: #60a5fa;
+    --bordure: #374151;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  line-height: 1.5;
+}
+
+header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+}
+
+header h1 { margin: 0 0 .5rem; font-size: 2.2rem; }
+header p { margin: 0; opacity: .75; }
+
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.carte {
+  display: block;
+  padding: 1.25rem;
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+
+.carte:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+}
+
+.carte h2 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--accent); }
+.carte p { margin: 0; font-size: .95rem; opacity: .8; }
+
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: .85rem;
+  opacity: .6;
+}
+
+/* Lien "retour à l'accueil" utilisable dans les pages */
+.retour {
+  display: inline-block;
+  margin: 1rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.retour:hover { text-decoration: underline; }
