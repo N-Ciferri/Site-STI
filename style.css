@@ -64,6 +64,7 @@ main {
 }
 
 .carte h3 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--accent); }
+.externe { font-size: .85em; opacity: .7; }
 .carte p { margin: 0; font-size: .95rem; opacity: .8; }
 
 .categorie + .categorie { margin-top: 2.5rem; }
