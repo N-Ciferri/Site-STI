@@ -2,6 +2,8 @@
 
 main.wrap{ padding-top:44px; }
 
+.page-head .h1-sub{ display:block; margin-top:8px; font-size:.42em; font-weight:800; letter-spacing:0; }
+
 .categorie{ margin-bottom:52px; scroll-margin-top:16px; }
 .categorie.cat-1re{ --tone:var(--c-1re); }
 .categorie.cat-term{ --tone:var(--c-term); }

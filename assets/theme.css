@@ -87,6 +87,8 @@ a{ color:inherit; }
   font-weight:900; font-size:18px; letter-spacing:-.01em; text-transform:uppercase; text-decoration:none;
   background:var(--ink); color:var(--paper); padding:6px 12px; margin-right:auto;
 }
+.site-nav .logo span{ font-weight:600; text-transform:none; letter-spacing:0; margin-left:4px; }
+@media (max-width:480px){ .site-nav .logo span{ display:none; } }
 .site-nav .links{ display:flex; gap:8px; flex-wrap:wrap; }
 .site-nav .links a{
   font-weight:800; font-size:14px; text-decoration:none; color:var(--on-cat);

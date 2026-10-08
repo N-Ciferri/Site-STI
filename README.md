@@ -1,4 +1,4 @@
-# Site STI
+# STI2D · Saint-Joseph Vannes
 
 Site statique hébergé avec **GitHub Pages** : une page d'accueil (`index.html`) qui renvoie vers plusieurs pages HTML.
 
