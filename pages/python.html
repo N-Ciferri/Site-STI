@@ -163,13 +163,38 @@
     font-family:"IBM Plex Sans", sans-serif; font-size:.9rem;
   }
 
-  details.aide{
-    background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+  .aide{ display:flex; flex-direction:column; gap:10px; }
+  .aide h2{ font-size:1.15rem; margin:6px 0 2px; }
+  details.aide-item{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
   }
-  details.aide > summary{ cursor:pointer; padding:14px 18px; font-weight:700; }
-  .aide-body{ padding:0 18px 16px; color:var(--text-muted); font-size:.92rem; }
+  details.aide-item > summary{
+    cursor:pointer; padding:13px 18px; font-weight:700; list-style:none;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  details.aide-item > summary::-webkit-details-marker{ display:none; }
+  details.aide-item > summary::after{ content:"+"; font-family:"IBM Plex Mono", monospace; font-size:1.2rem; color:var(--text-muted); }
+  details.aide-item[open] > summary::after{ content:"–"; }
+  details.aide-item > summary code{ font-weight:600; }
+  .aide-body{ padding:0 18px 16px; font-size:.93rem; line-height:1.55; }
+  .aide-body p{ margin:.5em 0; }
   .aide-body li{ margin:4px 0; }
-  .aide-body code{ font-family:"IBM Plex Mono", monospace; color:var(--text); }
+  .aide-body code{ font-family:"IBM Plex Mono", monospace; font-size:.9em; background:var(--surface-2); border:1px solid var(--border); border-radius:4px; padding:0 4px; }
+  .aide-body table{ border-collapse:collapse; width:100%; margin:.6em 0; font-size:.9rem; }
+  .aide-body th, .aide-body td{ border:1px solid var(--border); padding:6px 10px; text-align:left; vertical-align:top; }
+  .aide-body th{ background:var(--surface-2); color:var(--text-muted); font-weight:600; }
+  .aide-body td code{ white-space:nowrap; }
+  .table-scroll{ overflow-x:auto; }
+  .ex{ position:relative; margin:.7em 0; }
+  .ex pre{
+    margin:0; padding:10px 12px; padding-right:110px; border-radius:8px; background:var(--code-bg);
+    border:1px solid var(--border); font-family:"IBM Plex Mono", monospace; font-size:13.5px; line-height:1.5;
+    overflow-x:auto; white-space:pre;
+  }
+  .ex .try{ position:absolute; top:6px; right:6px; padding:4px 10px; font-size:.78rem; }
+  .note{ border-left:3px solid var(--hint-border); background:var(--hint-bg); padding:8px 12px; border-radius:0 8px 8px 0; margin:.7em 0; }
+  .good{ color:var(--run); font-weight:700; }
+  .bad{ color:#B03A2E; font-weight:700; }
   footer{ font-size:.8rem; color:var(--text-muted); }
   footer a{ color:inherit; }
 </style>
@@ -213,19 +238,147 @@
     </section>
   </div>
 
-  <details class="aide">
-    <summary>Aide</summary>
-    <div class="aide-body">
-      <ul>
-        <li><code>print(...)</code> affiche dans la zone Résultat.</li>
-        <li><code>input("Question ? ")</code> ouvre une petite fenêtre pour taper la réponse.</li>
-        <li>Les graphiques <code>matplotlib</code> s'affichent sous forme d'image (la première utilisation demande quelques secondes de téléchargement).</li>
-        <li><kbd>Tab</kbd> indente le code, <kbd>Maj</kbd> + <kbd>Tab</kbd> le désindente ; après une ligne qui finit par <code>:</code>, la touche Entrée indente automatiquement.</li>
-        <li>Votre programme est gardé dans ce navigateur : vous le retrouvez en revenant sur la page. Pour le conserver ailleurs, utilisez « Enregistrer ».</li>
-        <li>Attention aux boucles infinies (<code>while True</code> sans <code>break</code>) : la page se bloque. Il faut alors la recharger.</li>
-      </ul>
-    </div>
-  </details>
+  <section class="aide">
+    <h2>Aide</h2>
+
+    <details class="aide-item">
+      <summary><span>Utiliser l'éditeur</span></summary>
+      <div class="aide-body">
+        <ul>
+          <li><b>Exécuter</b> : bouton ▶ ou <kbd>Ctrl</kbd> + <kbd>Entrée</kbd>. Chaque exécution repart de zéro.</li>
+          <li><kbd>Tab</kbd> indente, <kbd>Maj</kbd> + <kbd>Tab</kbd> désindente. Après une ligne qui finit par <code>:</code>, la touche Entrée indente automatiquement.</li>
+          <li>En cas d'erreur, la ligne fautive passe en rouge et une explication s'affiche sous le message.</li>
+          <li>Le programme est gardé dans ce navigateur. Pour le conserver ailleurs, utilisez « Enregistrer ».</li>
+          <li>Les graphiques <code>matplotlib</code> s'affichent sous forme d'image (la première fois, quelques secondes de téléchargement).</li>
+          <li>Attention aux boucles infinies (<code>while True</code> sans <code>break</code>) : la page se bloque, il faut la recharger.</li>
+        </ul>
+        <p>Les boutons « Essayer » de cette aide copient l'exemple dans l'éditeur.</p>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary><span>Les types de données : int, float, str, bool</span></summary>
+      <div class="aide-body">
+        <p>Chaque valeur a un <b>type</b>. Le type décide de ce qu'on peut faire avec la valeur.</p>
+        <div class="table-scroll"><table>
+          <tr><th>Type</th><th>Ce que c'est</th><th>Exemples</th></tr>
+          <tr><td><code>int</code></td><td>nombre entier (positif ou négatif)</td><td><code>12</code> <code>-3</code> <code>0</code></td></tr>
+          <tr><td><code>float</code></td><td>nombre à virgule (on écrit un <b>point</b>, pas une virgule)</td><td><code>3.14</code> <code>-0.5</code> <code>2.0</code></td></tr>
+          <tr><td><code>str</code></td><td>chaîne de caractères : du texte</td><td><code>"Bonjour"</code> <code>"STI2D"</code> <code>'A'</code></td></tr>
+          <tr><td><code>bool</code></td><td>booléen : vrai ou faux</td><td><code>True</code> <code>False</code></td></tr>
+          <tr><td><code>list</code></td><td>liste de valeurs</td><td><code>[12, 15, 9]</code></td></tr>
+        </table></div>
+        <p><code>type(valeur)</code> donne le type d'une valeur.</p>
+        <div class="ex"><button class="btn try">Essayer</button><pre>print(type(12))        # &lt;class 'int'&gt;
+print(type(3.14))      # &lt;class 'float'&gt;
+print(type("Bonjour")) # &lt;class 'str'&gt;
+print(type(True))      # &lt;class 'bool'&gt;
+print(type(5 &gt; 3))     # une comparaison donne un bool</pre></div>
+        <p><b>Convertir</b> d'un type à l'autre :</p>
+        <div class="table-scroll"><table>
+          <tr><th>Fonction</th><th>Exemple</th><th>Résultat</th></tr>
+          <tr><td><code>int(...)</code></td><td><code>int("42")</code>, <code>int(3.9)</code></td><td><code>42</code>, <code>3</code> (coupe la partie décimale)</td></tr>
+          <tr><td><code>float(...)</code></td><td><code>float("12.5")</code>, <code>float(7)</code></td><td><code>12.5</code>, <code>7.0</code></td></tr>
+          <tr><td><code>str(...)</code></td><td><code>str(42)</code></td><td><code>"42"</code></td></tr>
+          <tr><td><code>bool(...)</code></td><td><code>bool(0)</code>, <code>bool(5)</code></td><td><code>False</code>, <code>True</code></td></tr>
+        </table></div>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary><span>Écrire les valeurs : guillemets, apostrophes, nombres</span></summary>
+      <div class="aide-body">
+        <ul>
+          <li>Une <b>chaîne de caractères</b> (du texte) s'écrit <b>entre guillemets</b> : <code>"Bonjour"</code>, <code>"Serre n°1"</code>.</li>
+          <li>Un <b>caractère seul</b> s'écrit <b>entre apostrophes</b> : <code>'A'</code>, <code>'7'</code>, <code>'?'</code>.</li>
+          <li>Un <b>nombre</b> s'écrit <b>sans rien autour</b> : <code>42</code>, <code>3.14</code>.</li>
+          <li><code>True</code> et <code>False</code> s'écrivent sans guillemets, avec une majuscule.</li>
+        </ul>
+        <div class="note">En Python, <code>'A'</code> et <code>"A"</code> sont en réalité identiques : ce sont deux chaînes de type <code>str</code>. On garde quand même l'habitude des apostrophes pour un caractère seul, car en C++ et sur Arduino elle est <b>obligatoire</b>.</div>
+        <p><b>Piège</b> : <code>"42"</code> (entre guillemets) est du texte, pas un nombre.</p>
+        <div class="ex"><button class="btn try">Essayer</button><pre>print(42 + 8)       # 50 : addition de deux nombres
+print("42" + "8")   # 428 : collage de deux textes
+print("42" * 3)     # 424242
+print(int("42") + 8)  # 50 : on convertit d'abord le texte en nombre</pre></div>
+        <p>Pour mettre une apostrophe dans un texte, utilisez des guillemets autour : <code>"l'entrée"</code>.</p>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary><span>Afficher : <code>print()</code></span></summary>
+      <div class="aide-body">
+        <p><code>print(...)</code> affiche des valeurs dans la zone Résultat, puis passe à la ligne.</p>
+        <ul>
+          <li>Le texte se met <b>entre guillemets</b>, les nombres et les variables <b>sans guillemets</b>.</li>
+          <li>On sépare plusieurs valeurs par des <b>virgules</b> : Python ajoute un espace entre elles.</li>
+        </ul>
+        <div class="ex"><button class="btn try">Essayer</button><pre>temperature = 23.5
+print("Bonjour")
+print("Température :", temperature, "°C")
+print("La lettre", 'A', "et le nombre", 7)
+print(2 + 3)          # affiche 5
+print("2 + 3")        # affiche le texte 2 + 3</pre></div>
+        <p>Deux options utiles :</p>
+        <ul>
+          <li><code>sep="..."</code> change le séparateur entre les valeurs ;</li>
+          <li><code>end="..."</code> change ce qui est écrit à la fin (par défaut, un retour à la ligne).</li>
+        </ul>
+        <div class="ex"><button class="btn try">Essayer</button><pre>print(12, 5, 2025, sep="/")    # 12/5/2025
+for i in range(5):
+    print(i, end=" ")           # 0 1 2 3 4 sur une seule ligne</pre></div>
+        <p>Avec un <b>f</b> devant les guillemets, on peut placer des variables entre accolades <code>{ }</code> :</p>
+        <div class="ex"><button class="btn try">Essayer</button><pre>nom = "Léa"
+note = 15.5
+print(f"{nom} a eu {note}/20")</pre></div>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary><span>Demander une valeur : <code>input()</code></span></summary>
+      <div class="aide-body">
+        <p><code>input("question")</code> affiche la question (<b>entre guillemets</b>) et attend la réponse de l'utilisateur.</p>
+        <div class="note"><code>input()</code> renvoie <b>toujours une chaîne de caractères</b> (<code>str</code>), même si on tape un nombre. Pour calculer, il faut convertir avec <code>int(...)</code> ou <code>float(...)</code>.</div>
+        <div class="ex"><button class="btn try">Essayer</button><pre>prenom = input("Ton prénom ? ")            # texte : pas de conversion
+age = int(input("Ton âge ? "))             # nombre entier
+taille = float(input("Ta taille en m ? ")) # nombre à virgule (avec un point)
+
+print("Bonjour", prenom)
+print("Dans 10 ans, tu auras", age + 10, "ans")
+print("Taille en cm :", taille * 100)</pre></div>
+        <p><span class="bad">✗</span> Sans conversion, Python colle des textes ou refuse le calcul :</p>
+        <div class="ex"><button class="btn try">Essayer</button><pre>age = input("Ton âge ? ")
+print(age + 10)   # erreur : on ne peut pas ajouter un nombre à un texte</pre></div>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary><span>Les fonctions : <code>def</code></span></summary>
+      <div class="aide-body">
+        <p>Une fonction regroupe des instructions sous un nom, pour pouvoir les réutiliser. On la crée avec le mot-clé <b><code>def</code> devant son nom</b> :</p>
+        <ul>
+          <li><code>def</code>, puis le nom, puis les <b>paramètres</b> entre parenthèses, puis <b>deux-points</b> <code>:</code> ;</li>
+          <li>les instructions de la fonction sont <b>indentées</b> (4 espaces) ;</li>
+          <li><code>return</code> renvoie le résultat de la fonction ;</li>
+          <li>la fonction doit être définie <b>avant</b> d'être appelée.</li>
+        </ul>
+        <div class="ex"><button class="btn try">Essayer</button><pre>def aire_rectangle(longueur, largeur):
+    aire = longueur * largeur
+    return aire
+
+# appel de la fonction
+resultat = aire_rectangle(4, 2.5)
+print("Aire :", resultat, "m²")
+print("Autre aire :", aire_rectangle(3, 3))</pre></div>
+        <p>Une fonction peut aussi ne rien renvoyer et seulement afficher :</p>
+        <div class="ex"><button class="btn try">Essayer</button><pre>def saluer(prenom):
+    print("Bonjour", prenom, "!")
+
+saluer("Léa")
+saluer("Tom")</pre></div>
+        <p><span class="bad">✗</span> Erreurs fréquentes : oublier les <code>:</code> après la parenthèse, oublier l'indentation, ou appeler la fonction sans parenthèses (<code>saluer</code> au lieu de <code>saluer("Léa")</code>).</p>
+      </div>
+    </details>
+  </section>
 
   <footer>Python 3.14 dans le navigateur grâce à <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> (licence MPL 2.0).</footer>
 </div>
@@ -402,6 +555,8 @@
       if(i > 0 && /File "\/lib\/python|File "\/home\/pyodide/.test(arr[i-1])) return false;
       return true;
     });
+    var txt = el.output.textContent;
+    if(txt && txt.slice(-1) !== "\n") append("\n");
     append(shown.join("\n").trim() + "\n", "err");
 
     var nums = (msg.match(/File "<exec>", line (\d+)/g) || []).map(function(m){ return +m.match(/(\d+)$/)[1]; });
@@ -447,8 +602,13 @@
   async function init(){
     try{
       pyodide = await loadPyodide({ indexURL: "pyodide/", packageBaseUrl: PACKAGES_URL });
-      pyodide.setStdout({ batched: function(s){ append(s + "\n"); } });
-      pyodide.setStderr({ batched: function(s){ append(s + "\n", "err"); } });
+      // sortie transmise telle quelle : un print(..., end="") apparaît dès que Python vide son tampon
+      function writer(cls){
+        var decoder = new TextDecoder();
+        return { isatty: false, write: function(buf){ append(decoder.decode(buf, { stream:true }), cls); return buf.length; } };
+      }
+      pyodide.setStdout(writer());
+      pyodide.setStderr(writer("err"));
       pyodide.setStdin({ stdin: function(){ return askInput(""); } });
       // input() passe sa question directement à la fenêtre de saisie
       pyodide.runPython("import builtins, sys\nfrom js import siteAskInput as _ask\ndef _site_input(prompt=''):\n    sys.stdout.flush()\n    return _ask(str(prompt))\nbuiltins.input = _site_input");
@@ -477,10 +637,12 @@
       }
       if(needsMpl) pyodide.runPython(MPL_SETUP);
       await pyodide.runPythonAsync(code, { globals: ns, filename: "<exec>" });
+      pyodide.runPython("import sys\nsys.stdout.flush()");
       if(needsMpl) pyodide.runPython("_site_show()");
       if(!el.output.textContent && !el.output.querySelector("img")) append("(le programme n'a rien affiché)\n", "info");
       setStatus("Python prêt", "ready");
     }catch(e){
+      try{ pyodide.runPython("import sys\nsys.stdout.flush()"); }catch(_){}
       showError(e);
       setStatus("Erreur dans le programme", "error");
     }finally{
@@ -525,6 +687,17 @@
     a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  /* ---------- Exemples de l'aide ---------- */
+  document.querySelectorAll(".ex .try").forEach(function(b){
+    b.addEventListener("click", function(){
+      var code = b.parentNode.querySelector("pre").textContent + "\n";
+      if(el.code.value.trim() && el.code.value !== code && !confirm("Remplacer le programme actuel par cet exemple ?")) return;
+      setCode(code);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      el.code.focus();
+    });
   });
 
   /* ---------- Démarrage ---------- */
