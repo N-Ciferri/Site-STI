@@ -10,7 +10,7 @@
     --bg:var(--paper);
     --text:var(--ink);
     --text-muted:var(--muted);
-    --border:var(--ink);
+    --border:var(--line);
     --accent:var(--ink);
     --accent-soft:var(--surface-2);
     --gate-and:#2F5496;
@@ -162,33 +162,33 @@
   /* ---------- Charte du site ---------- */
   body{ padding:0; background:var(--paper); }
   .page-main{ max-width:1120px; margin:0 auto; padding:32px 16px 0; display:flex; flex-direction:column; gap:28px; }
-  .panel{ border:var(--bw) solid var(--ink); box-shadow:var(--sh); }
+  .panel{ border:var(--bw) solid var(--line); box-shadow:var(--sh); }
   .panel h2{ font-size:1.35rem; font-weight:800; }
-  .btn{ border:2px solid var(--ink); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
-  .btn:hover:not(:disabled){ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); filter:none; }
+  .btn{ border:2px solid var(--line); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .btn:hover:not(:disabled){ transform:translate(-2px,-2px); box-shadow:var(--sh-sm-hover); filter:none; }
   .btn:active:not(:disabled){ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--shadow-c); }
-  .btn-ghost, .btn-ghost:hover:not(:disabled){ background:var(--surface); color:var(--ink); border-color:var(--ink); }
+  .btn-ghost, .btn-ghost:hover:not(:disabled){ background:var(--surface); color:var(--ink); border-color:var(--line); }
   .btn-primary, .btn-primary:hover:not(:disabled){ background:var(--cat); color:var(--on-cat); }
-  .stepper-ctrl{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); }
+  .stepper-ctrl{ border:2px solid var(--line); background:var(--surface); box-shadow:var(--sh-sm); }
   .stepper-ctrl output{ color:var(--ink); }
-  .palette-item{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
-  .palette-item:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); }
-  .palette-swatch{ border:1.5px solid var(--ink); }
-  .canvas-wrap{ border:2px dashed var(--ink); }
-  .tabs{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); padding:4px; gap:4px; }
+  .palette-item{ border:2px solid var(--line); background:var(--surface); box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .palette-item:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh-sm-hover); }
+  .palette-swatch{ border:1.5px solid var(--line); }
+  .canvas-wrap{ border:2px dashed var(--line); }
+  .tabs{ border:2px solid var(--line); background:var(--surface); box-shadow:var(--sh-sm); padding:4px; gap:4px; }
   .tab-btn{ color:var(--ink); font-weight:800; border:2px solid transparent; }
-  .tab-btn[aria-selected="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); box-shadow:none; }
-  .field input{ border:2px solid var(--ink); background:var(--surface); }
+  .tab-btn[aria-selected="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--line); box-shadow:none; }
+  .field input{ border:2px solid var(--line); background:var(--surface); }
   .field.decimal input{ color:var(--ink); }
   .result-row, .verify-box{ border-width:2px; }
-  .rule-box{ border:2px solid var(--ink); background:var(--surface-2); }
+  .rule-box{ border:2px solid var(--line); background:var(--surface-2); }
   .rule-box b{ color:var(--ink); }
-  .table-scroll{ border:2px solid var(--ink); }
+  .table-scroll{ border:2px solid var(--line); }
   table.tv thead th{ background:var(--cat); color:var(--on-cat); }
-  table.tv th, table.tv td{ border-bottom-color:var(--ink); }
-  table.tv th.sep, table.tv td.sep{ border-left-color:var(--ink); }
+  table.tv th, table.tv td{ border-bottom-color:var(--line); }
+  table.tv th.sep, table.tv td.sep{ border-left-color:var(--line); }
   table.tv tbody tr.current{ background:color-mix(in srgb, var(--cat) 35%, transparent); }
-  kbd{ font-family:var(--mono); border:1.5px solid var(--ink); border-bottom-width:3px; padding:0 4px; }
+  kbd{ font-family:var(--mono); border:1.5px solid var(--line); border-bottom-width:3px; padding:0 4px; }
 </style>
 </head>
 <body>

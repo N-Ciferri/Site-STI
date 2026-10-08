@@ -12,7 +12,6 @@
     --panel-2:var(--surface-2);
     --bezel:var(--surface-2);
     --ink-muted:var(--muted);
-    --line:var(--ink);
     --accent:var(--cat);
     --accent-strong:var(--ink);
     --accent-ink:var(--on-cat);
@@ -218,33 +217,33 @@
   body{ padding:0; background:var(--paper); }
   .page-main{ max-width:1120px; padding:32px 16px 0; gap:28px; }
   h1,h2,h3{ font-weight:800; }
-  .device, details.help{ border:var(--bw) solid var(--ink); box-shadow:var(--sh); }
-  .bezel{ border-bottom:var(--bw) solid var(--ink); }
-  .screen{ border-bottom:var(--bw) solid var(--ink); }
-  .modepick{ border:2px solid var(--ink); background:var(--surface); }
+  .device, details.help{ border:var(--bw) solid var(--line); box-shadow:var(--sh); }
+  .bezel{ border-bottom:var(--bw) solid var(--line); }
+  .screen{ border-bottom:var(--bw) solid var(--line); }
+  .modepick{ border:2px solid var(--line); background:var(--surface); }
   .modepick button{ color:var(--ink); font-weight:800; border:2px solid transparent; }
-  .modepick button[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
-  .step .dot{ border-color:var(--ink); color:var(--ink); }
-  .step.done .dot{ background:var(--surface-2); border-color:var(--ink); color:var(--ink); }
-  .step.active .dot{ background:var(--cat); border-color:var(--ink); color:var(--on-cat); }
+  .modepick button[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--line); }
+  .step .dot{ border-color:var(--line); color:var(--ink); }
+  .step.done .dot{ background:var(--surface-2); border-color:var(--line); color:var(--ink); }
+  .step.active .dot{ background:var(--cat); border-color:var(--line); color:var(--on-cat); }
   .step .label{ color:var(--muted); font-weight:600; }
   .step-line{ background:var(--ink); }
-  .progress button{ border:2px solid var(--ink); }
-  .progress button[data-state="ok"]{ background:var(--ok); border-color:var(--ink); }
-  .progress button[data-state="err"]{ background:var(--danger); border-color:var(--ink); opacity:1; }
-  .progress button[aria-current="true"]{ outline:3px solid var(--ink); }
-  input[type="text"], input[type="number"]{ border:2px solid var(--ink); }
-  .choice{ border:2px solid var(--ink); font-weight:600; }
-  .choice[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
-  .btn{ border:2px solid var(--ink); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
-  .btn:hover:not([disabled]){ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); }
+  .progress button{ border:2px solid var(--line); }
+  .progress button[data-state="ok"]{ background:var(--ok); border-color:var(--line); }
+  .progress button[data-state="err"]{ background:var(--danger); border-color:var(--line); opacity:1; }
+  .progress button[aria-current="true"]{ outline:3px solid var(--line); }
+  input[type="text"], input[type="number"]{ border:2px solid var(--line); }
+  .choice{ border:2px solid var(--line); font-weight:600; }
+  .choice[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--line); }
+  .btn{ border:2px solid var(--line); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .btn:hover:not([disabled]){ transform:translate(-2px,-2px); box-shadow:var(--sh-sm-hover); }
   .btn:active:not([disabled]){ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--shadow-c); }
-  .btn-primary, .btn-primary:hover{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
-  .btn-ghost, .btn-ghost:hover{ background:var(--surface); color:var(--ink); border-color:var(--ink); }
-  .feedback{ border:2px solid var(--ink); }
-  .hint{ border-left:5px solid var(--ink); color:var(--ink); }
-  .legend{ border-top:2px solid var(--ink); }
-  table.ref th, table.ref td{ border-color:var(--ink); }
+  .btn-primary, .btn-primary:hover{ background:var(--cat); color:var(--on-cat); border-color:var(--line); }
+  .btn-ghost, .btn-ghost:hover{ background:var(--surface); color:var(--ink); border-color:var(--line); }
+  .feedback{ border:2px solid var(--line); }
+  .hint{ border-left:5px solid var(--line); color:var(--ink); }
+  .legend{ border-top:2px solid var(--line); }
+  table.ref th, table.ref td{ border-color:var(--line); }
 </style>
 </head>
 <body>
