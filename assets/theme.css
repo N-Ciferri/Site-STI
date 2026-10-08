@@ -16,10 +16,10 @@
 
 :root{
   /* couleurs de catégorie (texte toujours noir dessus) */
-  --c-accueil:#FFD23F;
-  --c-1re:#FF6B57;
-  --c-term:#2EC4B6;
-  --c-outils:#8C9EFF;
+  --c-accueil:#FFE7A0;
+  --c-1re:#FFC3B6;
+  --c-term:#A9E5DA;
+  --c-outils:#CBD2FF;
   --cat:var(--c-accueil);
   --on-cat:#111111;
 
