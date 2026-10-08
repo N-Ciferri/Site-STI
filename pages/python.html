@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éditeur Python</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F3EE;
+    --surface:#FFFFFF;
+    --surface-2:#FBFAF7;
+    --text:#1C2024;
+    --text-muted:#5C6470;
+    --border:#DCD6C9;
+    --accent:#1F3864;
+    --accent-soft:#E7ECF4;
+    --run:#2E7D32;
+    --run-hover:#256628;
+    --code-bg:#FFFFFF;
+    --gutter:#F2EFE8;
+    --out-bg:#14181D;
+    --out-text:#E6EAEE;
+    --out-muted:#8A96A3;
+    --out-err:#FF8A7A;
+    --hint-bg:#FFF4DC;
+    --hint-border:#E7C46B;
+    --error-line:#FBE3DF;
+    --shadow: 0 1px 2px rgba(28,32,36,.06), 0 8px 20px -12px rgba(28,32,36,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171B;
+      --surface:#1D2126;
+      --surface-2:#20242A;
+      --text:#E9ECEF;
+      --text-muted:#98A2AD;
+      --border:#31363D;
+      --accent:#7FA3D9;
+      --accent-soft:#22314A;
+      --run:#3E9B45;
+      --run-hover:#4CAF53;
+      --code-bg:#181C21;
+      --gutter:#1D2126;
+      --out-bg:#0D1013;
+      --hint-bg:#3A2F13;
+      --hint-border:#8C6D1F;
+      --error-line:#4A2420;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14171B;
+    --surface:#1D2126;
+    --surface-2:#20242A;
+    --text:#E9ECEF;
+    --text-muted:#98A2AD;
+    --border:#31363D;
+    --accent:#7FA3D9;
+    --accent-soft:#22314A;
+    --run:#3E9B45;
+    --run-hover:#4CAF53;
+    --code-bg:#181C21;
+    --gutter:#1D2126;
+    --out-bg:#0D1013;
+    --hint-bg:#3A2F13;
+    --hint-border:#8C6D1F;
+    --error-line:#4A2420;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:28px 48px;
+  }
+  .wrap{ max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
+  .retour{ color:inherit; opacity:.75; text-decoration:none; font-size:14px; }
+  .retour:hover{ text-decoration:underline; }
+
+  header.page h1{
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+    font-weight:700; margin:0 0 4px; letter-spacing:-0.01em;
+  }
+  header.page p{ margin:0; color:var(--text-muted); font-size:.98rem; max-width:75ch; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace; font-size:.72rem; font-weight:600;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--accent);
+    margin-bottom:6px; display:block;
+  }
+
+  /* --- Barre d'outils --- */
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .btn{
+    appearance:none; border:1.5px solid var(--border); cursor:pointer; font:inherit; font-weight:600;
+    font-size:.9rem; border-radius:9px; padding:9px 14px; background:var(--surface); color:var(--text);
+    transition: transform .08s ease, background .15s ease;
+  }
+  .btn:hover:not(:disabled){ background:var(--accent-soft); }
+  .btn:active:not(:disabled){ transform:translateY(1px); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn:focus-visible, select:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn-run{ background:var(--run); border-color:var(--run); color:#fff; padding-inline:18px; }
+  .btn-run:hover:not(:disabled){ background:var(--run-hover); }
+  select{
+    font:inherit; font-size:.9rem; padding:9px 10px; border-radius:9px;
+    border:1.5px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer;
+  }
+  .spacer{ flex:1; }
+  .status{ font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; }
+  .status .dot{ width:9px; height:9px; border-radius:50%; background:#C9A227; }
+  .status.ready .dot{ background:var(--run); }
+  .status.error .dot{ background:#B03A2E; }
+  .kbd-hint{ font-size:.8rem; color:var(--text-muted); }
+  kbd{ font-family:"IBM Plex Mono", monospace; font-size:.78rem; border:1px solid var(--border); border-bottom-width:2px; border-radius:4px; padding:0 4px; background:var(--surface-2); }
+
+  /* --- Zone de travail --- */
+  .workspace{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; min-height:520px; }
+  @media (max-width:860px){ .workspace{ grid-template-columns:1fr; } }
+
+  .pane{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; overflow:hidden; min-height:320px;
+  }
+  .pane-head{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 14px; border-bottom:1px solid var(--border); background:var(--surface-2);
+    font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;
+  }
+
+  .editor{ position:relative; flex:1; display:flex; background:var(--code-bg); min-height:420px; }
+  .gutter{
+    flex:none; width:46px; padding:12px 8px 12px 0; text-align:right; overflow:hidden;
+    background:var(--gutter); color:var(--text-muted); border-right:1px solid var(--border);
+    font-family:"IBM Plex Mono", monospace; font-size:14px; line-height:1.55; user-select:none;
+  }
+  .gutter div{ height:calc(14px * 1.55); }
+  .gutter div.err{ background:var(--error-line); color:#B03A2E; font-weight:700; }
+  textarea#code{
+    flex:1; border:none; outline:none; resize:none; margin:0;
+    padding:12px 14px; background:transparent; color:var(--text);
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:14px; line-height:1.55;
+    tab-size:4; white-space:pre; overflow:auto;
+  }
+
+  .output{
+    flex:1; background:var(--out-bg); color:var(--out-text); padding:12px 14px; overflow:auto;
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:14px; line-height:1.5;
+    white-space:pre-wrap; word-break:break-word; min-height:240px; max-height:640px;
+  }
+  .output .err{ color:var(--out-err); }
+  .output .info{ color:var(--out-muted); font-style:italic; }
+  .output .in{ color:#7FD3E3; }
+  .output img{ display:block; max-width:100%; background:#fff; border-radius:6px; margin:8px 0; }
+  .output .hint{
+    display:block; white-space:normal; margin:10px 0 4px; padding:10px 12px; border-radius:8px;
+    background:var(--hint-bg); border:1px solid var(--hint-border); color:var(--text);
+    font-family:"IBM Plex Sans", sans-serif; font-size:.9rem;
+  }
+
+  details.aide{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+  }
+  details.aide > summary{ cursor:pointer; padding:14px 18px; font-weight:700; }
+  .aide-body{ padding:0 18px 16px; color:var(--text-muted); font-size:.92rem; }
+  .aide-body li{ margin:4px 0; }
+  .aide-body code{ font-family:"IBM Plex Mono", monospace; color:var(--text); }
+  footer{ font-size:.8rem; color:var(--text-muted); }
+  footer a{ color:inherit; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="retour" href="../index.html">← Retour à l'accueil</a>
+
+  <header class="page">
+    <span class="eyebrow">Outil — Programmation</span>
+    <h1>Éditeur Python</h1>
+    <p>Écrivez votre programme à gauche, cliquez sur « Exécuter » et le résultat s'affiche à droite. Python fonctionne directement dans le navigateur : rien à installer.</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn btn-run" id="btn-run" disabled>▶ Exécuter</button>
+    <select id="examples" aria-label="Charger un exemple">
+      <option value="">Exemples…</option>
+    </select>
+    <button class="btn" id="btn-open">Ouvrir un .py</button>
+    <button class="btn" id="btn-save">Enregistrer</button>
+    <input type="file" id="file-input" accept=".py,.txt,text/x-python,text/plain" hidden>
+    <span class="kbd-hint"><kbd>Ctrl</kbd> + <kbd>Entrée</kbd> pour exécuter</span>
+    <span class="spacer"></span>
+    <span class="status" id="status"><span class="dot"></span><span id="status-text">Chargement de Python…</span></span>
+  </div>
+
+  <div class="workspace">
+    <section class="pane">
+      <div class="pane-head"><span>Programme</span><span id="pos">Ligne 1</span></div>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Code Python"></textarea>
+      </div>
+    </section>
+
+    <section class="pane">
+      <div class="pane-head"><span>Résultat</span><button class="btn" id="btn-clear" style="padding:4px 10px; font-size:.78rem;">Effacer</button></div>
+      <div class="output" id="output" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <details class="aide">
+    <summary>Aide</summary>
+    <div class="aide-body">
+      <ul>
+        <li><code>print(...)</code> affiche dans la zone Résultat.</li>
+        <li><code>input("Question ? ")</code> ouvre une petite fenêtre pour taper la réponse.</li>
+        <li>Les graphiques <code>matplotlib</code> s'affichent sous forme d'image (la première utilisation demande quelques secondes de téléchargement).</li>
+        <li><kbd>Tab</kbd> indente le code, <kbd>Maj</kbd> + <kbd>Tab</kbd> le désindente ; après une ligne qui finit par <code>:</code>, la touche Entrée indente automatiquement.</li>
+        <li>Votre programme est gardé dans ce navigateur : vous le retrouvez en revenant sur la page. Pour le conserver ailleurs, utilisez « Enregistrer ».</li>
+        <li>Attention aux boucles infinies (<code>while True</code> sans <code>break</code>) : la page se bloque. Il faut alors la recharger.</li>
+      </ul>
+    </div>
+  </details>
+
+  <footer>Python 3.14 dans le navigateur grâce à <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> (licence MPL 2.0).</footer>
+</div>
+
+<script src="pyodide/pyodide.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var PACKAGES_URL = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/";
+  var STORAGE_KEY = "editeur-python-code";
+
+  var EXAMPLES = [
+    { name:"Bonjour", code:
+'prenom = input("Quel est ton prénom ? ")\nprint("Bonjour", prenom, "!")\n' },
+    { name:"Boucle for", code:
+'# Table de multiplication\nn = 7\nfor i in range(1, 11):\n    print(n, "x", i, "=", n * i)\n' },
+    { name:"Condition", code:
+'temperature = float(input("Température de la serre (°C) ? "))\n\nif temperature > 30:\n    print("Trop chaud : ouverture des fenêtres")\nelif temperature < 15:\n    print("Trop froid : chauffage en marche")\nelse:\n    print("Température correcte")\n' },
+    { name:"Fonction", code:
+'def moyenne(notes):\n    return sum(notes) / len(notes)\n\nnotes = [12, 15.5, 9, 17]\nprint("Moyenne :", round(moyenne(notes), 2))\n' },
+    { name:"Conversions (binaire, hexa)", code:
+'n = 214\nprint("Décimal     :", n)\nprint("Binaire     :", bin(n))\nprint("Hexadécimal :", hex(n))\nprint("Sur 8 bits  :", format(n, "08b"))\n\n# Et dans l\'autre sens\nprint(int("11010110", 2), int("D6", 16))\n' },
+    { name:"Graphique (matplotlib)", code:
+'import matplotlib.pyplot as plt\n\n# Charge d\'un condensateur : u(t) = E(1 - e^(-t/RC))\nimport math\nE, RC = 5, 0.5\nt = [i * 0.05 for i in range(60)]\nu = [E * (1 - math.exp(-x / RC)) for x in t]\n\nplt.plot(t, u)\nplt.xlabel("t (s)")\nplt.ylabel("u (V)")\nplt.title("Charge d\'un condensateur")\nplt.grid(True)\nplt.show()\n' }
+  ];
+
+  var el = {
+    run: document.getElementById("btn-run"),
+    examples: document.getElementById("examples"),
+    open: document.getElementById("btn-open"),
+    save: document.getElementById("btn-save"),
+    file: document.getElementById("file-input"),
+    clear: document.getElementById("btn-clear"),
+    status: document.getElementById("status"),
+    statusText: document.getElementById("status-text"),
+    code: document.getElementById("code"),
+    gutter: document.getElementById("gutter"),
+    output: document.getElementById("output"),
+    pos: document.getElementById("pos")
+  };
+
+  /* ---------- Éditeur ---------- */
+  var errorLine = null;
+
+  function updateGutter(){
+    var n = el.code.value.split("\n").length;
+    var html = "";
+    for(var i=1; i<=n; i++) html += '<div' + (i === errorLine ? ' class="err"' : '') + '>' + i + '</div>';
+    el.gutter.innerHTML = html;
+    el.gutter.scrollTop = el.code.scrollTop;
+  }
+  function updatePos(){
+    var before = el.code.value.slice(0, el.code.selectionStart);
+    el.pos.textContent = "Ligne " + before.split("\n").length;
+  }
+  function saveLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, el.code.value); }catch(e){}
+  }
+  function setCode(text){
+    el.code.value = text;
+    errorLine = null;
+    updateGutter(); updatePos(); saveLocal();
+  }
+
+  el.code.addEventListener("input", function(){ errorLine = null; updateGutter(); updatePos(); saveLocal(); });
+  el.code.addEventListener("scroll", function(){ el.gutter.scrollTop = el.code.scrollTop; });
+  el.code.addEventListener("click", updatePos);
+  el.code.addEventListener("keyup", updatePos);
+
+  // Remplace la sélection en gardant l'historique d'annulation (Ctrl+Z) quand c'est possible
+  function insertText(text){
+    if(!document.execCommand || !document.execCommand("insertText", false, text)){
+      var s = el.code.selectionStart, e = el.code.selectionEnd, v = el.code.value;
+      el.code.value = v.slice(0, s) + text + v.slice(e);
+      el.code.selectionStart = el.code.selectionEnd = s + text.length;
+      el.code.dispatchEvent(new Event("input"));
+    }
+  }
+
+  el.code.addEventListener("keydown", function(e){
+    var v = el.code.value, s = el.code.selectionStart, end = el.code.selectionEnd;
+    if((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); run(); return; }
+
+    if(e.key === "Tab"){
+      e.preventDefault();
+      var lineStart = v.lastIndexOf("\n", s - 1) + 1;
+      if(!e.shiftKey && s === end){ insertText("    "); return; }
+      // indentation / désindentation des lignes sélectionnées
+      var block = v.slice(lineStart, end);
+      var lines = block.split("\n");
+      var changed = lines.map(function(l){
+        if(e.shiftKey) return l.replace(/^ {1,4}|^\t/, "");
+        return "    " + l;
+      }).join("\n");
+      el.code.selectionStart = lineStart; el.code.selectionEnd = end;
+      insertText(changed);
+      el.code.selectionStart = lineStart; el.code.selectionEnd = lineStart + changed.length;
+      return;
+    }
+
+    if(e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey){
+      e.preventDefault();
+      var ls = v.lastIndexOf("\n", s - 1) + 1;
+      var line = v.slice(ls, s);
+      var indent = (line.match(/^[ \t]*/) || [""])[0];
+      if(/:\s*(#.*)?$/.test(line)) indent += "    ";
+      insertText("\n" + indent);
+      return;
+    }
+
+    if(e.key === "Backspace" && s === end && s > 0){
+      // efface 4 espaces d'indentation d'un coup
+      var ls2 = v.lastIndexOf("\n", s - 1) + 1;
+      var before = v.slice(ls2, s);
+      if(before.length >= 4 && /^ +$/.test(before) && before.length % 4 === 0){
+        e.preventDefault();
+        el.code.selectionStart = s - 4;
+        insertText("");
+      }
+    }
+  });
+
+  /* ---------- Sortie ---------- */
+  function append(text, cls){
+    var span = document.createElement("span");
+    if(cls) span.className = cls;
+    span.textContent = text;
+    el.output.appendChild(span);
+    el.output.scrollTop = el.output.scrollHeight;
+  }
+  function appendHint(text){
+    var d = document.createElement("span");
+    d.className = "hint";
+    d.textContent = "💡 " + text;
+    el.output.appendChild(d);
+  }
+  window.siteAddFigure = function(b64){
+    var img = document.createElement("img");
+    img.alt = "Graphique produit par le programme";
+    img.src = "data:image/png;base64," + b64;
+    el.output.appendChild(img);
+  };
+  el.clear.addEventListener("click", function(){ el.output.innerHTML = ""; });
+
+  /* ---------- Messages d'erreur en français ---------- */
+  var HINTS = {
+    SyntaxError: "Erreur de syntaxe : le code n'est pas écrit correctement. Vérifiez les parenthèses, les guillemets et les deux-points « : » à la fin des lignes if, for, while, def…",
+    IndentationError: "Erreur d'indentation : les espaces en début de ligne ne sont pas cohérents. Les lignes d'un même bloc doivent commencer au même niveau (4 espaces).",
+    TabError: "Mélange de tabulations et d'espaces pour l'indentation : utilisez uniquement des espaces.",
+    NameError: "Nom inconnu : une variable ou une fonction est utilisée avant d'avoir été définie, ou son nom est mal orthographié (attention aux majuscules).",
+    TypeError: "Erreur de type : une opération mélange des types incompatibles, par exemple un texte et un nombre. input() renvoie toujours du texte : utilisez int(...) ou float(...) pour le convertir.",
+    ValueError: "Valeur incorrecte : par exemple int(\"abc\") ou float(\"12,5\") (en Python, le séparateur décimal est le point).",
+    ZeroDivisionError: "Division par zéro.",
+    IndexError: "Indice hors de la liste : les indices commencent à 0 et vont jusqu'à len(liste) - 1.",
+    KeyError: "Clé absente du dictionnaire.",
+    AttributeError: "Cet objet ne possède pas l'attribut ou la méthode demandée. Vérifiez l'orthographe.",
+    ModuleNotFoundError: "Module introuvable : il n'existe pas, ou il n'est pas disponible dans le navigateur.",
+    RecursionError: "Trop d'appels récursifs : la fonction s'appelle elle-même sans jamais s'arrêter."
+  };
+
+  function showError(err){
+    var msg = String(err && err.message || err);
+    // garde uniquement les lignes qui concernent le programme de l'élève
+    var lines = msg.split("\n");
+    var start = lines.findIndex(function(l){ return /File "<exec>"/.test(l); });
+    var shown = start >= 0 ? ["Traceback (most recent call last):"].concat(lines.slice(start)) : lines;
+    // retire les explications techniques ajoutées par Pyodide
+    var cut = shown.findIndex(function(l){ return /^The module '.*' is included in the Pyodide distribution/.test(l); });
+    var notDownloaded = cut >= 0;
+    if(notDownloaded) shown = shown.slice(0, cut);
+    shown = shown.filter(function(l, i, arr){
+      if(/File "\/lib\/python/.test(l) || /File "\/home\/pyodide/.test(l)) return false;
+      if(i > 0 && /File "\/lib\/python|File "\/home\/pyodide/.test(arr[i-1])) return false;
+      return true;
+    });
+    append(shown.join("\n").trim() + "\n", "err");
+
+    var nums = (msg.match(/File "<exec>", line (\d+)/g) || []).map(function(m){ return +m.match(/(\d+)$/)[1]; });
+    if(nums.length){ errorLine = nums[nums.length - 1]; updateGutter(); }
+
+    var last = lines.filter(function(l){ return l.trim(); }).pop() || "";
+    var type = (last.match(/^(\w+)(?::|$)/) || [])[1];
+    if(notDownloaded) appendHint("Cette bibliothèque est téléchargée depuis internet à la première utilisation, et le téléchargement a échoué. Vérifiez la connexion puis réessayez.");
+    else if(type && HINTS[type]) appendHint(HINTS[type] + (errorLine ? " (ligne " + errorLine + ")" : ""));
+  }
+
+  /* ---------- Python ---------- */
+  var pyodide = null, running = false;
+
+  function askInput(question){
+    var answer = window.prompt(question || "Entrée :", "");
+    if(answer === null) answer = "";
+    if(question) append(question);
+    append(answer + "\n", "in");
+    return answer;
+  }
+  window.siteAskInput = askInput;
+
+  function setStatus(text, cls){
+    el.statusText.textContent = text;
+    el.status.className = "status" + (cls ? " " + cls : "");
+  }
+
+  var MPL_SETUP = [
+    "import matplotlib",
+    "matplotlib.use('Agg')",
+    "import matplotlib.pyplot as _plt, io as _io, base64 as _b64",
+    "from js import siteAddFigure as _siteAddFigure",
+    "def _site_show(*args, **kwargs):",
+    "    for _n in _plt.get_fignums():",
+    "        _buf = _io.BytesIO()",
+    "        _plt.figure(_n).savefig(_buf, format='png', dpi=100, bbox_inches='tight')",
+    "        _siteAddFigure(_b64.b64encode(_buf.getvalue()).decode())",
+    "    _plt.close('all')",
+    "_plt.show = _site_show"
+  ].join("\n");
+
+  async function init(){
+    try{
+      pyodide = await loadPyodide({ indexURL: "pyodide/", packageBaseUrl: PACKAGES_URL });
+      pyodide.setStdout({ batched: function(s){ append(s + "\n"); } });
+      pyodide.setStderr({ batched: function(s){ append(s + "\n", "err"); } });
+      pyodide.setStdin({ stdin: function(){ return askInput(""); } });
+      // input() passe sa question directement à la fenêtre de saisie
+      pyodide.runPython("import builtins, sys\nfrom js import siteAskInput as _ask\ndef _site_input(prompt=''):\n    sys.stdout.flush()\n    return _ask(str(prompt))\nbuiltins.input = _site_input");
+      setStatus("Python prêt", "ready");
+      el.run.disabled = false;
+    }catch(e){
+      setStatus("Python n'a pas pu se charger", "error");
+      append("Impossible de charger Python : " + e + "\nEssayez de recharger la page.\n", "err");
+    }
+  }
+
+  async function run(){
+    if(!pyodide || running) return;
+    running = true;
+    el.run.disabled = true;
+    el.output.innerHTML = "";
+    errorLine = null; updateGutter();
+    var code = el.code.value;
+    var ns = pyodide.globals.get("dict")();
+    try{
+      setStatus("Exécution…");
+      var needsMpl = /^\s*(import|from)\s+matplotlib/m.test(code);
+      if(/^\s*(import|from)\s+\w/m.test(code)){
+        setStatus("Chargement des bibliothèques…");
+        await pyodide.loadPackagesFromImports(code, { messageCallback: function(){}, errorCallback: function(){} });
+      }
+      if(needsMpl) pyodide.runPython(MPL_SETUP);
+      await pyodide.runPythonAsync(code, { globals: ns, filename: "<exec>" });
+      if(needsMpl) pyodide.runPython("_site_show()");
+      if(!el.output.textContent && !el.output.querySelector("img")) append("(le programme n'a rien affiché)\n", "info");
+      setStatus("Python prêt", "ready");
+    }catch(e){
+      showError(e);
+      setStatus("Erreur dans le programme", "error");
+    }finally{
+      ns.destroy();
+      running = false;
+      el.run.disabled = false;
+    }
+  }
+
+  /* ---------- Boutons ---------- */
+  el.run.addEventListener("click", run);
+
+  EXAMPLES.forEach(function(ex, i){
+    var o = document.createElement("option");
+    o.value = String(i); o.textContent = ex.name;
+    el.examples.appendChild(o);
+  });
+  el.examples.addEventListener("change", function(){
+    var ex = EXAMPLES[+el.examples.value];
+    el.examples.value = "";
+    if(!ex) return;
+    if(el.code.value.trim() && !confirm("Remplacer le programme actuel par l'exemple « " + ex.name + " » ?")) return;
+    setCode(ex.code);
+    el.code.focus();
+  });
+
+  el.open.addEventListener("click", function(){ el.file.click(); });
+  el.file.addEventListener("change", function(){
+    var f = el.file.files[0];
+    if(!f) return;
+    f.text().then(function(t){ setCode(t.replace(/\r\n/g, "\n")); });
+    el.file.value = "";
+  });
+
+  el.save.addEventListener("click", function(){
+    var name = prompt("Nom du fichier :", "programme.py");
+    if(!name) return;
+    if(!/\.py$/i.test(name)) name += ".py";
+    var blob = new Blob([el.code.value], { type:"text/x-python" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  /* ---------- Démarrage ---------- */
+  var saved = null;
+  try{ saved = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  setCode(saved !== null && saved !== "" ? saved : EXAMPLES[0].code);
+  init();
+})();
+</script>
+
+</body>
+</html>
