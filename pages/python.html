@@ -195,6 +195,37 @@
   .note{ border-left:3px solid var(--hint-border); background:var(--hint-bg); padding:8px 12px; border-radius:0 8px 8px 0; margin:.7em 0; }
   .good{ color:var(--run); font-weight:700; }
   .bad{ color:#B03A2E; font-weight:700; }
+  /* --- Bibliothèques importées --- */
+  .libs{ display:flex; flex-direction:column; gap:10px; }
+  .libs-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .libs-head h2{ font-size:1.15rem; margin:6px 0 2px; }
+  .libs-empty{ color:var(--text-muted); font-size:.92rem; margin:0; }
+  .libs-empty code{ font-family:"IBM Plex Mono", monospace; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:0 4px; }
+  .lib-tag{ font-family:"IBM Plex Mono", monospace; font-size:.75rem; font-weight:600; color:var(--text-muted);
+    border:1px solid var(--border); border-radius:999px; padding:1px 8px; margin-left:8px; }
+  .lib-close{ appearance:none; border:none; background:transparent; color:var(--text-muted); cursor:pointer;
+    font-size:1.1rem; line-height:1; padding:2px 6px; border-radius:6px; margin-left:auto; }
+  .lib-close:hover{ background:var(--accent-soft); color:var(--text); }
+  details.aide-item > summary .lib-title{ display:flex; align-items:center; gap:6px; flex:1; min-width:0; flex-wrap:wrap; }
+  .fonctions td:first-child{ white-space:normal; }
+  .fonctions td:first-child code{ white-space:normal; }
+  details.tech{ border:1px solid var(--border); border-radius:10px; margin-top:12px; background:var(--surface-2); }
+  details.tech > summary{ cursor:pointer; padding:10px 14px; font-weight:600; font-size:.9rem; }
+  .tech-body{ padding:0 14px 12px; }
+  .tech-body input[type="search"]{
+    width:100%; font:inherit; font-size:.9rem; padding:8px 10px; border-radius:8px;
+    border:1.5px solid var(--border); background:var(--surface); color:var(--text); margin:4px 0 10px;
+  }
+  .tech-info{ font-size:.85rem; color:var(--text-muted); margin:.3em 0 .6em; }
+  .doc-item{ padding:8px 0; border-top:1px solid var(--border); }
+  .doc-item:first-of-type{ border-top:none; }
+  .doc-item .sig{ font-family:"IBM Plex Mono", monospace; font-size:.88rem; font-weight:600; word-break:break-word; }
+  .doc-item .kind{ font-size:.72rem; color:var(--text-muted); margin-left:8px; text-transform:uppercase; letter-spacing:.05em; }
+  .doc-item p{ margin:.25em 0 0; font-size:.88rem; color:var(--text-muted); }
+  .doc-item details summary{ cursor:pointer; font-size:.8rem; color:var(--accent); margin-top:2px; }
+  .doc-item pre{ white-space:pre-wrap; font-family:"IBM Plex Mono", monospace; font-size:.8rem; margin:.4em 0 0;
+    padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; }
+
   footer{ font-size:.8rem; color:var(--text-muted); }
   footer a{ color:inherit; }
 </style>
@@ -237,6 +268,17 @@
       <div class="output" id="output" aria-live="polite"></div>
     </section>
   </div>
+
+  <section class="libs" aria-live="polite">
+    <div class="libs-head">
+      <h2>Bibliothèques importées</h2>
+      <select id="lib-other" aria-label="Voir la documentation d'une autre bibliothèque">
+        <option value="">Voir une autre bibliothèque…</option>
+      </select>
+    </div>
+    <p class="libs-empty" id="libs-empty">Aucune bibliothèque importée. Écrivez par exemple <code>import random</code> dans le programme : sa documentation s'affichera ici.</p>
+    <div id="libs-list" class="aide"></div>
+  </section>
 
   <section class="aide">
     <h2>Aide</h2>
@@ -383,6 +425,7 @@ saluer("Tom")</pre></div>
   <footer>Python 3.14 dans le navigateur grâce à <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> (licence MPL 2.0).</footer>
 </div>
 
+<script src="python-docs.js"></script>
 <script src="pyodide/pyodide.js"></script>
 <script>
 (function(){
@@ -442,6 +485,7 @@ saluer("Tom")</pre></div>
     el.code.value = text;
     errorLine = null;
     updateGutter(); updatePos(); saveLocal();
+    refreshLibs();
   }
 
   el.code.addEventListener("input", function(){ errorLine = null; updateGutter(); updatePos(); saveLocal(); });
@@ -599,6 +643,269 @@ saluer("Tom")</pre></div>
     "_plt.show = _site_show"
   ].join("\n");
 
+  /* ---------- Bibliothèques importées : documentation ---------- */
+  // Lit la documentation intégrée à Python (docstrings) pour un module donné
+  var DOC_HELPER = [
+    "import importlib as _il, inspect as _ins, json as _json, sys as _sys",
+    "def _site_doc(name):",
+    "    try:",
+    "        m = _il.import_module(name)",
+    "    except Exception as e:",
+    "        return _json.dumps({'error': type(e).__name__ + ': ' + str(e)})",
+    "    names = getattr(m, '__all__', None) or [n for n in dir(m) if not n.startswith('_')]",
+    "    items = []",
+    "    for n in sorted(set(names), key=str.lower):",
+    "        try:",
+    "            o = getattr(m, n)",
+    "        except Exception:",
+    "            continue",
+    "        if _ins.ismodule(o):",
+    "            continue",
+    "        if _ins.isclass(o):",
+    "            kind = 'classe'",
+    "        elif callable(o):",
+    "            kind = 'fonction'",
+    "        else:",
+    "            kind = 'constante'",
+    "        sig = ''",
+    "        if kind != 'constante':",
+    "            try:",
+    "                sig = str(_ins.signature(o))",
+    "            except Exception:",
+    "                sig = '(...)'",
+    "        doc = _ins.getdoc(o) or '' if kind != 'constante' else 'valeur : ' + repr(o)[:120]",
+    "        items.append({'name': n, 'kind': kind, 'sig': sig, 'doc': doc[:3000]})",
+    "    top = name.split('.')[0]",
+    "    return _json.dumps({'doc': (_ins.getdoc(m) or '')[:1500], 'items': items,",
+    "                        'stdlib': top in _sys.stdlib_module_names})"
+  ].join("\n");
+
+  var FICHES = window.FICHES_PYTHON || {};
+  var ALIAS = window.FICHES_PYTHON_ALIAS || {};
+  var libsList = document.getElementById("libs-list");
+  var libsEmpty = document.getElementById("libs-empty");
+  var libOther = document.getElementById("lib-other");
+  var libCards = {};     // nom -> élément <details>
+  var pinnedLibs = [];   // bibliothèques ouvertes à la main
+  var pendingDocs = [];  // docs techniques demandées avant que Python soit prêt
+
+  function ficheName(name){ return FICHES[name] ? name : (ALIAS[name] && FICHES[ALIAS[name]] ? ALIAS[name] : null); }
+
+  function detectImports(code){
+    var found = [];
+    code.split("\n").forEach(function(line){
+      var l = line.replace(/#.*/, ""), m;
+      if((m = l.match(/^\s*import\s+(.+)$/))){
+        m[1].split(",").forEach(function(part){
+          var n = part.trim().split(/\s+as\s+/)[0].trim();
+          if(/^[A-Za-z_][\w.]*$/.test(n)) found.push(n);
+        });
+      } else if((m = l.match(/^\s*from\s+([A-Za-z_][\w.]*)\s+import\b/))){
+        found.push(m[1]);
+      }
+    });
+    // une seule carte par bibliothèque (matplotlib et matplotlib.pyplot -> une fiche)
+    var seen = {}, out = [];
+    found.forEach(function(n){
+      var key = ficheName(n) || n;
+      if(!seen[key]){ seen[key] = true; out.push(key); }
+    });
+    return out;
+  }
+
+  function mk(tag, cls, text){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text != null) e.textContent = text;
+    return e;
+  }
+
+  function docLink(name, stdlib){
+    var top = name.split(".")[0];
+    if(top === "matplotlib") return "https://matplotlib.org/stable/api/pyplot_summary.html";
+    if(top === "numpy") return "https://numpy.org/doc/stable/";
+    if(stdlib) return "https://docs.python.org/fr/3/library/" + top + ".html";
+    return null;
+  }
+
+  function buildCard(name, pinned){
+    var fiche = FICHES[name];
+    var d = mk("details", "aide-item");
+    var sum = mk("summary");
+    var title = mk("span", "lib-title");
+    title.appendChild(mk("code", null, name));
+    if(fiche) title.appendChild(mk("span", null, "— " + fiche.titre.replace(/^[^—]*—\s*/, "")));
+    if(pinned){
+      var close = mk("button", "lib-close", "×");
+      close.type = "button"; close.title = "Fermer"; close.setAttribute("aria-label", "Fermer la documentation de " + name);
+      close.addEventListener("click", function(e){
+        e.preventDefault();
+        pinnedLibs = pinnedLibs.filter(function(n){ return n !== name; });
+        refreshLibs();
+      });
+      title.appendChild(close);
+    } else {
+      title.appendChild(mk("span", "lib-tag", "importée"));
+    }
+    sum.appendChild(title);
+    d.appendChild(sum);
+
+    var body = mk("div", "aide-body");
+    if(fiche){
+      body.appendChild(mk("p", null, fiche.intro));
+      var wrap = mk("div", "table-scroll");
+      var table = mk("table", "fonctions");
+      var head = mk("tr"); head.appendChild(mk("th", null, "Syntaxe")); head.appendChild(mk("th", null, "Rôle"));
+      table.appendChild(head);
+      fiche.fonctions.forEach(function(f){
+        var tr = mk("tr");
+        var td1 = mk("td"); td1.appendChild(mk("code", null, f[0]));
+        tr.appendChild(td1); tr.appendChild(mk("td", null, f[1]));
+        table.appendChild(tr);
+      });
+      wrap.appendChild(table); body.appendChild(wrap);
+      if(fiche.note) body.appendChild(mk("div", "note", fiche.note));
+      if(fiche.exemple){
+        var ex = mk("div", "ex");
+        var btn = mk("button", "btn try", "Essayer"); btn.type = "button";
+        ex.appendChild(btn); ex.appendChild(mk("pre", null, fiche.exemple.replace(/\n$/, "")));
+        wireTry(btn);
+        body.appendChild(ex);
+      }
+    } else {
+      body.appendChild(mk("p", null, "Pas de fiche en français pour cette bibliothèque : voici la documentation technique fournie par Python."));
+    }
+
+    var tech = mk("details", "tech");
+    tech.appendChild(mk("summary", null, "Documentation technique complète (en anglais)"));
+    var techBody = mk("div", "tech-body");
+    techBody.appendChild(mk("p", "tech-info", "Chargement…"));
+    tech.appendChild(techBody);
+    tech.addEventListener("toggle", function(){ if(tech.open && !tech.dataset.loaded) loadTechDoc(name, techBody, tech); });
+    body.appendChild(tech);
+    if(!fiche) tech.open = true;
+
+    d.appendChild(body);
+    return d;
+  }
+
+  async function loadTechDoc(name, box, tech){
+    if(!pyodide){ pendingDocs.push(function(){ loadTechDoc(name, box, tech); }); return; }
+    if(running){ setTimeout(function(){ loadTechDoc(name, box, tech); }, 300); return; }
+    tech.dataset.loaded = "1";
+    box.innerHTML = "";
+    var info = mk("p", "tech-info", "Chargement de la documentation…");
+    box.appendChild(info);
+    try{
+      try{ await pyodide.loadPackagesFromImports("import " + name, { messageCallback: function(){}, errorCallback: function(){} }); }catch(_){}
+      var res = JSON.parse(pyodide.globals.get("_site_doc")(name));
+      box.innerHTML = "";
+      if(res.error){
+        var msg = /No module named/.test(res.error)
+          ? "Bibliothèque introuvable : vérifiez son nom. Certaines bibliothèques ne sont pas disponibles dans le navigateur, ou doivent d'abord être téléchargées (connexion internet nécessaire)."
+          : "Impossible de lire la documentation : " + res.error;
+        box.appendChild(mk("p", "tech-info", msg));
+        delete tech.dataset.loaded;
+        return;
+      }
+      var link = docLink(name, res.stdlib);
+      var p = mk("p", "tech-info", res.items.length + " éléments, tirés de la documentation intégrée à Python. ");
+      if(link){
+        var a = mk("a", null, res.stdlib ? "Documentation officielle en français ↗" : "Documentation officielle ↗");
+        a.href = link; a.target = "_blank"; a.rel = "noopener";
+        p.appendChild(a);
+      }
+      box.appendChild(p);
+      if(res.doc) box.appendChild(mk("pre", null, res.doc));
+      var search = mk("input"); search.type = "search"; search.placeholder = "Rechercher une fonction…";
+      box.appendChild(search);
+      var list = mk("div");
+      res.items.forEach(function(it){
+        var row = mk("div", "doc-item");
+        row.dataset.name = it.name.toLowerCase();
+        var line = mk("div");
+        line.appendChild(mk("span", "sig", (name.split(".").pop() === "pyplot" ? "plt" : name) + "." + it.name + (it.sig || "")));
+        line.appendChild(mk("span", "kind", it.kind));
+        row.appendChild(line);
+        if(it.doc){
+          var paras = it.doc.split(/\n\s*\n/);
+          row.appendChild(mk("p", null, paras[0].replace(/\s+/g, " ")));
+          if(paras.length > 1){
+            var more = mk("details");
+            more.appendChild(mk("summary", null, "suite"));
+            more.appendChild(mk("pre", null, paras.slice(1).join("\n\n")));
+            row.appendChild(more);
+          }
+        }
+        list.appendChild(row);
+      });
+      box.appendChild(list);
+      search.addEventListener("input", function(){
+        var q = search.value.trim().toLowerCase();
+        Array.prototype.forEach.call(list.children, function(r){ r.hidden = q && r.dataset.name.indexOf(q) < 0; });
+      });
+    }catch(e){
+      box.innerHTML = "";
+      box.appendChild(mk("p", "tech-info", "Impossible de lire la documentation : " + e));
+      delete tech.dataset.loaded;
+    }
+  }
+
+  function refreshLibs(){
+    var imported = detectImports(el.code.value);
+    var wanted = imported.map(function(n){ return { name:n, pinned:false }; });
+    pinnedLibs.forEach(function(n){ if(imported.indexOf(n) < 0) wanted.push({ name:n, pinned:true }); });
+    var keys = wanted.map(function(w){ return w.name + (w.pinned ? "#p" : ""); });
+
+    Object.keys(libCards).forEach(function(k){
+      if(keys.indexOf(k) < 0){ libCards[k].remove(); delete libCards[k]; }
+    });
+    wanted.forEach(function(w, i){
+      var k = keys[i];
+      if(!libCards[k]){
+        libCards[k] = buildCard(w.name, w.pinned);
+        if(w.pinned) libCards[k].open = true;
+      }
+      libsList.appendChild(libCards[k]); // garde l'ordre du programme
+    });
+    libsEmpty.hidden = wanted.length > 0;
+  }
+
+  Object.keys(FICHES).forEach(function(n){
+    var o = document.createElement("option");
+    o.value = n; o.textContent = FICHES[n].titre;
+    libOther.appendChild(o);
+  });
+  var optOther = document.createElement("option");
+  optOther.value = "?"; optOther.textContent = "Autre (taper son nom)…";
+  libOther.appendChild(optOther);
+  libOther.addEventListener("change", function(){
+    var n = libOther.value;
+    libOther.value = "";
+    if(n === "?"){
+      n = (prompt("Nom de la bibliothèque (par exemple : string, os, json) :") || "").trim();
+      if(!/^[A-Za-z_][\w.]*$/.test(n)) return;
+    }
+    if(!n) return;
+    n = ficheName(n) || n;
+    var existing = libCards[n] || libCards[n + "#p"];
+    if(!existing){ pinnedLibs.push(n); refreshLibs(); existing = libCards[n + "#p"]; }
+    existing.open = true;
+    existing.scrollIntoView({ behavior:"smooth", block:"start" });
+  });
+
+  var libsTimer = null;
+  el.code.addEventListener("input", function(){
+    clearTimeout(libsTimer);
+    libsTimer = setTimeout(refreshLibs, 400);
+  });
+
+  function pythonReady(){
+    setStatus("Python prêt", "ready");
+    el.run.disabled = false;
+    pendingDocs.splice(0).forEach(function(f){ f(); });
+  }
+
   async function init(){
     try{
       pyodide = await loadPyodide({ indexURL: "pyodide/", packageBaseUrl: PACKAGES_URL });
@@ -612,6 +919,8 @@ saluer("Tom")</pre></div>
       pyodide.setStdin({ stdin: function(){ return askInput(""); } });
       // input() passe sa question directement à la fenêtre de saisie
       pyodide.runPython("import builtins, sys\nfrom js import siteAskInput as _ask\ndef _site_input(prompt=''):\n    sys.stdout.flush()\n    return _ask(str(prompt))\nbuiltins.input = _site_input");
+      pyodide.runPython(DOC_HELPER);
+      pythonReady();
       setStatus("Python prêt", "ready");
       el.run.disabled = false;
     }catch(e){
@@ -690,7 +999,7 @@ saluer("Tom")</pre></div>
   });
 
   /* ---------- Exemples de l'aide ---------- */
-  document.querySelectorAll(".ex .try").forEach(function(b){
+  function wireTry(b){
     b.addEventListener("click", function(){
       var code = b.parentNode.querySelector("pre").textContent + "\n";
       if(el.code.value.trim() && el.code.value !== code && !confirm("Remplacer le programme actuel par cet exemple ?")) return;
@@ -698,7 +1007,8 @@ saluer("Tom")</pre></div>
       window.scrollTo({ top: 0, behavior: "smooth" });
       el.code.focus();
     });
-  });
+  }
+  document.querySelectorAll(".aide-item .ex .try").forEach(wireTry);
 
   /* ---------- Démarrage ---------- */
   var saved = null;
