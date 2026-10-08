@@ -1,101 +1,70 @@
-:root {
-  --fond: #f4f6fa;
-  --texte: #1f2933;
-  --carte: #ffffff;
-  --accent: #2563eb;
-  --bordure: #dde3ec;
+/* Styles propres à la page d'accueil (la charte commune est dans assets/theme.css) */
+
+main.wrap{ padding-top:44px; }
+
+.categorie{ margin-bottom:52px; scroll-margin-top:16px; }
+.categorie.cat-1re{ --tone:var(--c-1re); }
+.categorie.cat-term{ --tone:var(--c-term); }
+.categorie.cat-outils{ --tone:var(--c-outils); }
+
+.categorie-titre{
+  display:inline-block;
+  margin:0 0 22px;
+  padding:6px 14px;
+  font-size:26px;
+  font-weight:800;
+  color:var(--on-cat);
+  background:var(--tone);
+  border:var(--bw) solid var(--ink);
+  box-shadow:4px 4px 0 var(--shadow-c);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fond: #111827;
-    --texte: #e5e7eb;
-    --carte: #1f2937;
-    --accent: #60a5fa;
-    --bordure: #374151;
-  }
+.grille{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+  gap:24px;
 }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: var(--fond);
-  color: var(--texte);
-  line-height: 1.5;
+.carte{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:180px;
+  padding:20px;
+  background:var(--surface);
+  color:inherit;
+  text-decoration:none;
+  border:var(--bw) solid var(--ink);
+  box-shadow:6px 6px 0 var(--ink);
+  transition:transform .12s, box-shadow .12s;
+}
+.carte:hover{ transform:translate(-3px,-3px); box-shadow:9px 9px 0 var(--ink); }
+.carte:active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink); }
+.carte:focus-visible{ outline:3px solid var(--tone); outline-offset:5px; }
+.carte h3{ margin:0; font-size:21px; font-weight:800; }
+.carte p{ margin:0; font-size:15px; line-height:1.45; color:var(--muted); }
+.carte .go{
+  margin-top:auto;
+  align-self:flex-start;
+  font-family:var(--mono);
+  font-weight:500;
+  font-size:13px;
+  color:var(--on-cat);
+  background:var(--tone);
+  border:2px solid var(--ink);
+  padding:3px 9px;
 }
 
-header {
-  text-align: center;
-  padding: 3rem 1rem 2rem;
+.vide{
+  margin:0;
+  padding:20px;
+  border:var(--bw) dashed var(--ink);
+  color:var(--muted);
 }
 
-header h1 { margin: 0 0 .5rem; font-size: 2.2rem; }
-header p { margin: 0; opacity: .75; }
-
-main {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 1rem 3rem;
+/* en mode sombre, l'ombre des cartes prend la couleur de la catégorie */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .carte{ box-shadow:6px 6px 0 var(--tone); }
+  :root:not([data-theme="light"]) .carte:hover{ box-shadow:9px 9px 0 var(--tone); }
+  :root:not([data-theme="light"]) .categorie-titre{ box-shadow:4px 4px 0 var(--ink); }
 }
-
-.grille {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-}
-
-.carte {
-  display: block;
-  padding: 1.25rem;
-  background: var(--carte);
-  border: 1px solid var(--bordure);
-  border-radius: 12px;
-  color: inherit;
-  text-decoration: none;
-  transition: transform .15s, border-color .15s, box-shadow .15s;
-}
-
-.carte:hover {
-  transform: translateY(-3px);
-  border-color: var(--accent);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
-}
-
-.carte h3 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--accent); }
-.externe { font-size: .85em; opacity: .7; }
-.carte p { margin: 0; font-size: .95rem; opacity: .8; }
-
-.categorie + .categorie { margin-top: 2.5rem; }
-
-.categorie-titre {
-  margin: 0 0 1rem;
-  padding-bottom: .5rem;
-  font-size: 1.4rem;
-  border-bottom: 2px solid var(--accent);
-}
-
-.vide {
-  margin: 0;
-  padding: 1.25rem;
-  border: 1px dashed var(--bordure);
-  border-radius: 12px;
-  opacity: .7;
-}
-
-footer {
-  text-align: center;
-  padding: 1.5rem;
-  font-size: .85rem;
-  opacity: .6;
-}
-
-/* Lien "retour à l'accueil" utilisable dans les pages */
-.retour {
-  display: inline-block;
-  margin: 1rem;
-  color: var(--accent);
-  text-decoration: none;
-}
-.retour:hover { text-decoration: underline; }

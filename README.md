@@ -5,11 +5,16 @@ Site statique hébergé avec **GitHub Pages** : une page d'accueil (`index.html`
 ## Structure
 
 ```
-index.html      → page d'accueil (liste des pages)
-style.css       → style commun
-pages/          → vos pages HTML
-.nojekyll       → indique à GitHub Pages de servir les fichiers tels quels
+index.html          → page d'accueil (liste des pages par catégorie)
+style.css           → styles propres à l'accueil
+assets/theme.css    → charte graphique commune (couleurs, polices, menu, boutons)
+assets/fonts/       → polices Archivo et DM Mono (hébergées dans le site)
+pages/              → les pages HTML (activités et outils)
+.nojekyll           → indique à GitHub Pages de servir les fichiers tels quels
 ```
+
+Couleurs des catégories (définies dans `assets/theme.css`) : 1re en corail, Terminale en turquoise, Outils en bleu lavande.
+Dans une page, la catégorie se choisit avec la classe de la balise `<html>` : `cat-1re`, `cat-term` ou `cat-outils`.
 
 ## Ajouter une page
 

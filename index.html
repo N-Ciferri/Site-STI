@@ -4,71 +4,93 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Site STI</title>
+  <link rel="stylesheet" href="assets/theme.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Site STI</h1>
-    <p>Choisissez une page ci-dessous</p>
+  <nav class="site-nav" aria-label="Navigation principale">
+    <div class="wrap">
+      <a class="logo" href="index.html">Site STI</a>
+      <div class="links">
+        <a class="l-1re" href="#premiere">1re</a>
+        <a class="l-term" href="#terminale">Terminale</a>
+        <a class="l-outils" href="#outils">Outils</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-head">
+    <div class="wrap">
+      <span class="tag">STI2D · ressources</span>
+      <h1>Site STI</h1>
+      <p>Activités, simulateurs et outils pour les cours d'IT, d'I2D et de 2I2D.</p>
+    </div>
   </header>
 
-  <main>
+  <main class="wrap">
     <!--
       POUR AJOUTER UNE PAGE :
       1. Déposez votre fichier HTML dans le dossier "pages/".
       2. Dans la bonne catégorie ci-dessous, copiez un bloc <a class="carte"> ... </a>
          et changez le lien (href), le titre et la description.
       3. Si la catégorie contenait le message "Pages à venir", supprimez-le.
+      Chaque catégorie a sa couleur (classe cat-1re, cat-term ou cat-outils).
     -->
 
-    <section class="categorie">
-      <h2 class="categorie-titre">1<sup>re</sup> — IT et I2D</h2>
+    <section class="categorie cat-1re" id="premiere">
+      <h2 class="categorie-titre">1re · IT et I2D</h2>
       <div class="grille">
 
         <a class="carte" href="pages/greenbox.html">
           <h3>GreenBox</h3>
           <p>Décoder les messages ASCII et le voyant d'état de la serre connectée (numération, hexadécimal, codage RVB).</p>
+          <span class="go">Ouvrir →</span>
         </a>
 
       </div>
     </section>
 
-    <section class="categorie">
-      <h2 class="categorie-titre">Terminale — 2I2D</h2>
+    <section class="categorie cat-term" id="terminale">
+      <h2 class="categorie-titre">Terminale · 2I2D</h2>
       <div class="grille">
 
         <a class="carte" href="pages/accessbox.html">
           <h3>AccessBox</h3>
           <p>Vérifier ses conversions binaire / hexadécimal et construire le logigramme de la règle d'accès.</p>
+          <span class="go">Ouvrir →</span>
         </a>
 
       </div>
     </section>
-    <section class="categorie">
+
+    <section class="categorie cat-outils" id="outils">
       <h2 class="categorie-titre">Outils</h2>
       <div class="grille">
 
         <a class="carte" href="pages/simulateur-logique.html">
           <h3>Simulateur de portes logiques</h3>
           <p>Choisir le nombre d'entrées, placer et câbler des portes, lire l'état logique et la table de vérité du circuit.</p>
+          <span class="go">Ouvrir →</span>
         </a>
 
         <a class="carte" href="pages/python.html">
           <h3>Éditeur Python</h3>
           <p>Écrire et exécuter des programmes Python directement dans le navigateur, sans rien installer. Exemples, aide sur les erreurs et graphiques.</p>
+          <span class="go">Ouvrir →</span>
         </a>
 
         <a class="carte" href="pages/tracker/index.html" target="_blank" rel="noopener">
-          <h3>Tracker <span class="externe">↗</span></h3>
-          <p>Analyse vidéo du mouvement : pointer un objet image par image et obtenir sa position, sa vitesse et ses graphiques. Tracker Online, logiciel libre d'Open Source Physics (copie de la version du 23/09/2026). S'ouvre dans un nouvel onglet.</p>
+          <h3>Tracker</h3>
+          <p>Analyse vidéo du mouvement : pointer un objet image par image et obtenir sa position, sa vitesse et ses graphiques. Tracker Online, logiciel libre d'Open Source Physics (copie de la version du 23/09/2026).</p>
+          <span class="go">Nouvel onglet ↗</span>
         </a>
 
       </div>
     </section>
   </main>
 
-  <footer>
-    <p>Nicolas CIFERRI</p>
+  <footer class="site-foot">
+    <div class="wrap">Nicolas CIFERRI</div>
   </footer>
 </body>
 </html>

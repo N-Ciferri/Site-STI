@@ -1,67 +1,39 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="cat-outils">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulateur de portes logiques</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/theme.css">
 <style>
   :root{
-    --bg:#F5F3EE;
-    --surface:#FFFFFF;
-    --surface-2:#FBFAF7;
-    --text:#1C2024;
-    --text-muted:#5C6470;
-    --border:#DCD6C9;
-    --accent:#1F3864;
-    --accent-soft:#E7ECF4;
+    --bg:var(--paper);
+    --text:var(--ink);
+    --text-muted:var(--muted);
+    --border:var(--ink);
+    --accent:var(--ink);
+    --accent-soft:var(--surface-2);
     --gate-and:#2F5496;
     --gate-and-soft:#DCE6F0;
     --gate-or:#2E7D32;
+    --gate-or-soft:#E4F1E6;
     --gate-not:#B8860B;
+    --gate-not-soft:#FBF1D9;
     --signal-on:#0891A8;
     --signal-off:#B7BFC9;
-    --bad:#B03A2E;
-    --shadow: 0 1px 2px rgba(28,32,36,.06), 0 8px 20px -12px rgba(28,32,36,.18);
+    --good:var(--ok);
+    --bad:var(--danger);
+    --shadow:var(--sh);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#14171B;
-      --surface:#1D2126;
-      --surface-2:#20242A;
-      --text:#E9ECEF;
-      --text-muted:#98A2AD;
-      --border:#31363D;
-      --accent:#7FA3D9;
-      --accent-soft:#22314A;
-      --gate-and:#7FA3D9;
-      --gate-and-soft:#22314A;
-      --gate-or:#79C68A;
-      --gate-not:#E5BB5C;
-      --signal-on:#3FD3E8;
-      --signal-off:#454C55;
-      --bad:#E58C7E;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+      --gate-and:#7FA3D9; --gate-and-soft:#22314A; --gate-or:#79C68A; --gate-or-soft:#1E3324;
+      --gate-not:#E5BB5C; --gate-not-soft:#3A2F13; --signal-on:#3FD3E8; --signal-off:#555B63;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#14171B;
-    --surface:#1D2126;
-    --surface-2:#20242A;
-    --text:#E9ECEF;
-    --text-muted:#98A2AD;
-    --border:#31363D;
-    --accent:#7FA3D9;
-    --accent-soft:#22314A;
-    --gate-and:#7FA3D9;
-    --gate-and-soft:#22314A;
-    --gate-or:#79C68A;
-    --gate-not:#E5BB5C;
-    --signal-on:#3FD3E8;
-    --signal-off:#454C55;
-    --bad:#E58C7E;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    --gate-and:#7FA3D9; --gate-and-soft:#22314A; --gate-or:#79C68A; --gate-or-soft:#1E3324;
+    --gate-not:#E5BB5C; --gate-not-soft:#3A2F13; --signal-on:#3FD3E8; --signal-off:#555B63;
   }
 
   *{box-sizing:border-box;}
@@ -69,11 +41,11 @@
     margin:0;
     background:var(--bg);
     color:var(--text);
-    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family:var(--font);
     padding-inline:16px;
     padding-block:28px 48px;
   }
-  .wrap{ max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+  .page-main{ max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
   .retour{ color:inherit; opacity:.75; text-decoration:none; font-size:14px; }
   .retour:hover{ text-decoration:underline; }
 
@@ -83,13 +55,13 @@
   }
   header.page p{ margin:0; color:var(--text-muted); font-size:.98rem; max-width:70ch; }
   .eyebrow{
-    font-family:"IBM Plex Mono", monospace; font-size:.72rem; font-weight:600;
+    font-family:var(--mono); font-size:.72rem; font-weight:600;
     letter-spacing:.09em; text-transform:uppercase; color:var(--accent);
     margin-bottom:6px; display:block;
   }
 
   .panel{
-    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    background:var(--surface); border:1px solid var(--border); border-radius:0;
     padding: 22px clamp(14px,3vw,28px); box-shadow:var(--shadow);
   }
   .panel h2{ font-size:1.15rem; margin:0 0 4px; font-weight:700; }
@@ -100,7 +72,7 @@
   .stepper{ display:flex; flex-direction:column; gap:6px; }
   .stepper > span{ font-size:.8rem; font-weight:600; color:var(--text-muted); }
   .stepper-ctrl{
-    display:flex; align-items:center; border:1.5px solid var(--border); border-radius:9px;
+    display:flex; align-items:center; border:1.5px solid var(--border); border-radius:0;
     background:var(--surface-2); width:fit-content; overflow:hidden;
   }
   .stepper-ctrl button{
@@ -110,13 +82,13 @@
   .stepper-ctrl button:hover{ background:var(--accent-soft); }
   .stepper-ctrl button:disabled{ opacity:.35; cursor:not-allowed; background:transparent; }
   .stepper-ctrl output{
-    min-width:36px; text-align:center; font-family:"IBM Plex Mono", monospace;
+    min-width:36px; text-align:center; font-family:var(--mono);
     font-weight:600; font-size:1.05rem; color:var(--accent);
   }
 
   .btn{
     appearance:none; border:none; cursor:pointer; font:inherit; font-weight:600; font-size:.9rem;
-    border-radius:9px; padding:10px 16px; transition: transform .08s ease, filter .15s ease;
+    border-radius:0; padding:10px 16px; transition: transform .08s ease, filter .15s ease;
   }
   .btn:active{ transform: translateY(1px); }
   .btn:disabled{ opacity:.45; cursor:not-allowed; }
@@ -132,13 +104,13 @@
   }
   .palette-item{
     display:flex; align-items:center; gap:10px; background:var(--surface-2);
-    border:1.5px solid var(--border); border-radius:10px; padding:8px 12px;
+    border:1.5px solid var(--border); border-radius:0; padding:8px 12px;
     cursor:grab; user-select:none; font-size:.85rem; font-weight:600; white-space:nowrap;
   }
   .palette-item:active{ cursor:grabbing; }
   .palette-swatch{
-    width:34px; height:28px; border-radius:5px; display:flex; align-items:center; justify-content:center;
-    font-family:"IBM Plex Mono", monospace; font-weight:700; font-size:.85rem; color:#fff; flex-shrink:0;
+    width:34px; height:28px; border-radius:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:700; font-size:.85rem; color:#fff; flex-shrink:0;
   }
   .palette-item[data-type="AND"] .palette-swatch,
   .palette-item[data-type="NAND"] .palette-swatch{ background:var(--gate-and); }
@@ -149,7 +121,7 @@
   .palette-item[data-type="XNOR"] .palette-swatch{ background:var(--accent); }
 
   .canvas-wrap{
-    flex:1; min-width:280px; border:1.5px dashed var(--border); border-radius:12px;
+    flex:1; min-width:280px; border:1.5px dashed var(--border); border-radius:0;
     background: linear-gradient(var(--surface-2) 1px, transparent 1px) 0 0/100% 30px, var(--surface);
     overflow:hidden; touch-action:none;
   }
@@ -160,8 +132,8 @@
   .legend i{ width:11px; height:11px; border-radius:50%; display:inline-block; }
 
   /* --- Table de vérité --- */
-  .table-scroll{ overflow-x:auto; max-height:520px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
-  table.tv{ border-collapse:collapse; font-family:"IBM Plex Mono", monospace; font-size:.9rem; width:100%; }
+  .table-scroll{ overflow-x:auto; max-height:520px; overflow-y:auto; border:1px solid var(--border); border-radius:0; }
+  table.tv{ border-collapse:collapse; font-family:var(--mono); font-size:.9rem; width:100%; }
   table.tv th, table.tv td{
     padding:6px 12px; text-align:center; border-bottom:1px solid var(--border);
     font-variant-numeric:tabular-nums;
@@ -186,18 +158,60 @@
     .palette-item{ flex:1 1 calc(33% - 10px); justify-content:center; padding:8px 6px; gap:6px; font-size:.78rem; }
     .canvas-wrap{ min-width:0; }
   }
+
+  /* ---------- Charte du site ---------- */
+  body{ padding:0; background:var(--paper); }
+  .page-main{ max-width:1120px; margin:0 auto; padding:32px 16px 0; display:flex; flex-direction:column; gap:28px; }
+  .panel{ border:var(--bw) solid var(--ink); box-shadow:var(--sh); }
+  .panel h2{ font-size:1.35rem; font-weight:800; }
+  .btn{ border:2px solid var(--ink); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .btn:hover:not(:disabled){ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); filter:none; }
+  .btn:active:not(:disabled){ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--shadow-c); }
+  .btn-ghost, .btn-ghost:hover:not(:disabled){ background:var(--surface); color:var(--ink); border-color:var(--ink); }
+  .btn-primary, .btn-primary:hover:not(:disabled){ background:var(--cat); color:var(--on-cat); }
+  .stepper-ctrl{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); }
+  .stepper-ctrl output{ color:var(--ink); }
+  .palette-item{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .palette-item:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); }
+  .palette-swatch{ border:1.5px solid var(--ink); }
+  .canvas-wrap{ border:2px dashed var(--ink); }
+  .tabs{ border:2px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); padding:4px; gap:4px; }
+  .tab-btn{ color:var(--ink); font-weight:800; border:2px solid transparent; }
+  .tab-btn[aria-selected="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); box-shadow:none; }
+  .field input{ border:2px solid var(--ink); background:var(--surface); }
+  .field.decimal input{ color:var(--ink); }
+  .result-row, .verify-box{ border-width:2px; }
+  .rule-box{ border:2px solid var(--ink); background:var(--surface-2); }
+  .rule-box b{ color:var(--ink); }
+  .table-scroll{ border:2px solid var(--ink); }
+  table.tv thead th{ background:var(--cat); color:var(--on-cat); }
+  table.tv th, table.tv td{ border-bottom-color:var(--ink); }
+  table.tv th.sep, table.tv td.sep{ border-left-color:var(--ink); }
+  table.tv tbody tr.current{ background:color-mix(in srgb, var(--cat) 35%, transparent); }
+  kbd{ font-family:var(--mono); border:1.5px solid var(--ink); border-bottom-width:3px; padding:0 4px; }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <a class="retour" href="../index.html">← Retour à l'accueil</a>
-
-  <header class="page">
-    <span class="eyebrow">Outil — Logique combinatoire</span>
+<nav class="site-nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="logo" href="../index.html">Site STI</a>
+    <div class="links">
+      <a class="l-1re" href="../index.html#premiere">1re</a>
+      <a class="l-term" href="../index.html#terminale">Terminale</a>
+      <a class="l-outils" href="../index.html#outils" aria-current="page">Outils</a>
+    </div>
+  </div>
+</nav>
+<header class="page-head">
+  <div class="wrap">
+    <span class="tag">Outil · Logique combinatoire</span>
     <h1>Simulateur de portes logiques</h1>
     <p>Choisissez le nombre d'entrées et de sorties, placez vos portes, reliez-les, puis observez l'état logique de chaque signal. La table de vérité de votre circuit se construit automatiquement.</p>
-  </header>
+  </div>
+</header>
+
+<div class="page-main">
 
   <section class="panel">
     <h2>Plan de câblage</h2>
@@ -259,6 +273,8 @@
     </div>
   </section>
 </div>
+
+<footer class="site-foot"><div class="wrap">Nicolas CIFERRI</div></footer>
 
 <script>
 (function(){
@@ -386,7 +402,7 @@
       fill: val ? 'var(--signal-on)' : 'var(--surface)',
       stroke: val ? 'var(--signal-on)' : 'var(--border)', 'stroke-width':2}));
     g.appendChild(svgText({x:cx, y:cy + fontSize*0.36, 'text-anchor':'middle',
-      'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':fontSize,
+      'font-family':'DM Mono, monospace', 'font-weight':700, 'font-size':fontSize,
       fill: val ? '#fff' : 'var(--text-muted)'}, String(val)));
     return g;
   }
@@ -434,9 +450,9 @@
   function drawInput(i){
     var t = inTerm(i), id = inId(i), val = state.values[i];
     var g = svgEl('g', {style:'cursor:pointer'});
-    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:10,
+    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:0,
       fill:'var(--gate-and-soft)', stroke:'var(--gate-and)', 'stroke-width':1.5}));
-    g.appendChild(svgText({x:t.x+16, y:t.y+TERM_H/2+6, 'font-family':'IBM Plex Mono, monospace',
+    g.appendChild(svgText({x:t.x+16, y:t.y+TERM_H/2+6, 'font-family':'DM Mono, monospace',
       'font-weight':700, 'font-size':18, fill:'var(--text)'}, inLabel(i)));
     g.appendChild(valueBadge(t.x+TERM_W-22, t.y+TERM_H/2, 11, val, 11));
     g.addEventListener('click', function(e){ e.stopPropagation(); state.values[i] = val ? 0 : 1; render(); });
@@ -455,9 +471,9 @@
     var t = outTerm(i), id = outId(i);
     var val = evalNode(id, state.values);
     var g = svgEl('g', {});
-    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:10,
+    g.appendChild(svgEl('rect', {x:t.x, y:t.y, width:TERM_W, height:TERM_H, rx:0,
       fill:'var(--surface-2)', stroke:'var(--accent)', 'stroke-width':1.75}));
-    g.appendChild(svgText({x:t.x+18, y:t.y+TERM_H/2+6, 'font-family':'IBM Plex Mono, monospace',
+    g.appendChild(svgText({x:t.x+18, y:t.y+TERM_H/2+6, 'font-family':'DM Mono, monospace',
       'font-weight':700, 'font-size':16, fill:'var(--text)'}, outLabel(i)));
     g.appendChild(valueBadge(t.x+TERM_W-22, t.y+TERM_H/2, 11, val, 11));
     svg.appendChild(g);
@@ -480,10 +496,10 @@
     var outVal = evalNode(g.id, state.values);
 
     var grp = svgEl('g', {});
-    grp.appendChild(svgEl('rect', {x:g.x, y:g.y, width:GATE_W, height:GATE_H, rx:4,
+    grp.appendChild(svgEl('rect', {x:g.x, y:g.y, width:GATE_W, height:GATE_H, rx:0,
       fill:'var(--surface)', stroke:strokeColor, 'stroke-width': selected ? 3 : 1.75, style:'cursor:move'}));
     grp.appendChild(svgText({x:g.x+GATE_W/2, y:g.y+GATE_H/2+6, 'text-anchor':'middle',
-      'font-family':'IBM Plex Mono, monospace', 'font-weight':700, 'font-size':17, fill:'var(--text)',
+      'font-family':'DM Mono, monospace', 'font-weight':700, 'font-size':17, fill:'var(--text)',
       style:'cursor:move'}, info.symbol));
     if(info.bubble){
       grp.appendChild(svgEl('circle', {cx:g.x+GATE_W+BUBBLE_R, cy:g.y+GATE_H/2, r:BUBBLE_R,

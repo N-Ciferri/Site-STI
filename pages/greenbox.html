@@ -1,24 +1,21 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="cat-1re">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GreenBox</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/theme.css">
 <style>
   :root{
-    --bg:#EEF3EE;
-    --panel:#FFFFFF;
-    --panel-2:#E4ECE6;
-    --bezel:#D7E2DA;
-    --ink:#16261D;
-    --ink-muted:#55695C;
-    --line:#C9D7CC;
-    --accent:#1F8A55;
-    --accent-strong:#146B41;
-    --accent-ink:#FFFFFF;
+    --bg:var(--paper);
+    --panel:var(--surface);
+    --panel-2:var(--surface-2);
+    --bezel:var(--surface-2);
+    --ink-muted:var(--muted);
+    --line:var(--ink);
+    --accent:var(--cat);
+    --accent-strong:var(--ink);
+    --accent-ink:var(--on-cat);
     --amber:#B96A17;
     --red:#B23327;
     --blue:#1D6693;
@@ -29,60 +26,22 @@
     --ok-ink:#146B41;
     --bad-bg:#FBEBE9;
     --bad-ink:#9A2E23;
-    --shadow:0 1px 2px rgba(20,40,25,.08), 0 10px 28px -14px rgba(20,40,25,.30);
-    --radius-panel:20px;
-    --radius-control:10px;
-    --font-display:'Big Shoulders Display', 'Arial Narrow', sans-serif;
-    --font-body:'IBM Plex Sans', system-ui, sans-serif;
-    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+    --shadow:var(--sh);
+    --radius-panel:0;
+    --radius-control:0;
+    --font-display:var(--font);
+    --font-body:var(--font);
+    --font-mono:var(--mono);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#0E1712;
-      --panel:#16211B;
-      --panel-2:#1D2A22;
-      --bezel:#25352B;
-      --ink:#E7F1E9;
-      --ink-muted:#96AC9E;
-      --line:#2B3B31;
-      --accent:#48C585;
-      --accent-strong:#63D89B;
-      --accent-ink:#08150E;
-      --amber:#E3A24C;
-      --red:#E8695F;
-      --blue:#6EB3E6;
-      --mono-bg:#081109;
-      --mono-ink:#7BE3A6;
-      --mono-ink-dim:#3C5C49;
-      --ok-bg:#132A1D;
-      --ok-ink:#7BE3A6;
-      --bad-bg:#301B18;
-      --bad-ink:#E8695F;
-      --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.65);
+      --amber:#E3A24C; --red:#E8695F; --blue:#6EB3E6; --mono-bg:#081109;
+      --ok-bg:#132A1D; --ok-ink:#7BE3A6; --bad-bg:#301B18; --bad-ink:#E8695F;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#0E1712;
-    --panel:#16211B;
-    --panel-2:#1D2A22;
-    --bezel:#25352B;
-    --ink:#E7F1E9;
-    --ink-muted:#96AC9E;
-    --line:#2B3B31;
-    --accent:#48C585;
-    --accent-strong:#63D89B;
-    --accent-ink:#08150E;
-    --amber:#E3A24C;
-    --red:#E8695F;
-    --blue:#6EB3E6;
-    --mono-bg:#081109;
-    --mono-ink:#7BE3A6;
-    --mono-ink-dim:#3C5C49;
-    --ok-bg:#132A1D;
-    --ok-ink:#7BE3A6;
-    --bad-bg:#301B18;
-    --bad-ink:#E8695F;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.65);
+    --amber:#E3A24C; --red:#E8695F; --blue:#6EB3E6; --mono-bg:#081109;
+    --ok-bg:#132A1D; --ok-ink:#7BE3A6; --bad-bg:#301B18; --bad-ink:#E8695F;
   }
 
   *{box-sizing:border-box;}
@@ -100,7 +59,7 @@
   ::selection{background:color-mix(in srgb, var(--accent) 35%, transparent);}
   button{font-family:inherit;}
 
-  .wrap{max-width:920px; margin-inline:auto; display:flex; flex-direction:column; gap:20px;}
+  .page-main{max-width:920px; margin-inline:auto; display:flex; flex-direction:column; gap:20px;}
 
   /* ---------- Header ---------- */
   .masthead{display:flex; flex-direction:column; gap:14px;}
@@ -112,7 +71,7 @@
   .title-row h1{font-size:clamp(34px,6vw,52px); font-weight:800; color:var(--ink); letter-spacing:.01em;}
   .title-row .tag{
     font-family:var(--font-mono); font-size:13px; color:var(--ink-muted);
-    border:1px solid var(--line); border-radius:999px; padding:4px 12px;
+    border:1px solid var(--line); border-radius:0; padding:4px 12px;
   }
   .lede{color:var(--ink-muted); max-width:62ch; font-size:15px;}
 
@@ -132,7 +91,7 @@
 
   /* ---------- Device panel ---------- */
   .device{
-    background:var(--panel); border-radius:var(--radius-panel); box-shadow:var(--shadow);
+    background:var(--panel); border-radius:0; box-shadow:var(--shadow);
     border:1px solid var(--line); overflow:hidden;
   }
   .bezel{
@@ -145,10 +104,10 @@
     transition:background-color .25s ease, box-shadow .25s ease;
   }
   .led.on{box-shadow: 0 0 0 3px color-mix(in srgb, var(--led-color,#8a8a8a) 30%, transparent), inset 0 0 0 1px rgba(0,0,0,.15); background:var(--led-color,#8a8a8a);}
-  .modepick{display:flex; gap:6px; background:var(--panel-2); padding:4px; border-radius:999px; border:1px solid var(--line);}
+  .modepick{display:flex; gap:6px; background:var(--panel-2); padding:4px; border-radius:0; border:1px solid var(--line);}
   .modepick button{
     border:none; background:transparent; color:var(--ink-muted); font-size:13px; font-weight:600;
-    padding:7px 14px; border-radius:999px; cursor:pointer; transition:background-color .15s, color .15s;
+    padding:7px 14px; border-radius:0; cursor:pointer; transition:background-color .15s, color .15s;
   }
   .modepick button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink);}
   .modepick button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
@@ -163,7 +122,7 @@
     font-size:clamp(18px,4.4vw,28px); font-weight:600; letter-spacing:.06em; word-break:break-word;
   }
   .screen .swatch-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
-  .swatch{width:52px; height:52px; border-radius:8px; border:2px solid rgba(255,255,255,.15); flex:none;}
+  .swatch{width:52px; height:52px; border-radius:0; border:2px solid rgba(255,255,255,.15); flex:none;}
 
   .body-pad{padding:20px;}
   .puzzle-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
@@ -172,7 +131,7 @@
 
   .progress{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;}
   .progress button{
-    width:20px; height:14px; border-radius:3px; border:1px solid var(--line); background:var(--panel-2);
+    width:20px; height:14px; border-radius:0; border:1px solid var(--line); background:var(--panel-2);
     cursor:pointer; padding:0;
   }
   .progress button[data-state="ok"]{background:var(--accent); border-color:var(--accent);}
@@ -185,7 +144,7 @@
   .field{flex:1 1 90px; min-width:80px;}
   input[type="text"], input[type="number"]{
     width:100%; font-family:var(--font-mono); font-size:16px; padding:10px 12px;
-    border:1px solid var(--line); border-radius:var(--radius-control); background:var(--panel);
+    border:1px solid var(--line); border-radius:0; background:var(--panel);
     color:var(--ink);
   }
   input:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
@@ -193,16 +152,16 @@
   .choice-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; margin-top:6px;}
   .choice{
     text-align:left; border:1px solid var(--line); background:var(--panel); color:var(--ink);
-    border-radius:var(--radius-control); padding:10px 12px; cursor:pointer; font-size:14px;
+    border-radius:0; padding:10px 12px; cursor:pointer; font-size:14px;
     display:flex; align-items:center; gap:10px;
   }
-  .choice .swatch-sm{width:16px; height:16px; border-radius:4px; flex:none; border:1px solid rgba(0,0,0,.15);}
+  .choice .swatch-sm{width:16px; height:16px; border-radius:0; flex:none; border:1px solid rgba(0,0,0,.15);}
   .choice[aria-pressed="true"]{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--panel)); font-weight:600;}
   .choice:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
   .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center;}
   .btn{
-    border-radius:var(--radius-control); padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent;
+    border-radius:0; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent;
   }
   .btn-primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
   .btn-primary:hover{background:var(--accent-strong); border-color:var(--accent-strong);}
@@ -212,7 +171,7 @@
   .btn[disabled]{opacity:.45; cursor:not-allowed;}
 
   .feedback{
-    margin-top:14px; padding:10px 14px; border-radius:var(--radius-control); font-size:14px; font-weight:500;
+    margin-top:14px; padding:10px 14px; border-radius:0; font-size:14px; font-weight:500;
     display:none;
   }
   .feedback.show{display:block;}
@@ -228,13 +187,13 @@
   .legend h3{font-size:14px; font-weight:600; margin-bottom:10px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em;}
   .legend-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px;}
   .legend-item{display:flex; gap:10px; align-items:flex-start; font-size:13px;}
-  .legend-item .swatch-sm{width:16px; height:16px; border-radius:4px; margin-top:2px; flex:none; border:1px solid rgba(0,0,0,.15);}
+  .legend-item .swatch-sm{width:16px; height:16px; border-radius:0; margin-top:2px; flex:none; border:1px solid rgba(0,0,0,.15);}
   .legend-item b{display:block; font-size:13px;}
   .legend-item span{color:var(--ink-muted);}
 
   /* ---------- Aide-mémoire ---------- */
   details.help{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-panel); box-shadow:var(--shadow);
+    background:var(--panel); border:1px solid var(--line); border-radius:0; box-shadow:var(--shadow);
   }
   details.help > summary{
     list-style:none; cursor:pointer; padding:16px 20px; font-weight:700; font-family:var(--font-display); font-size:18px;
@@ -249,33 +208,74 @@
   table.ref th, table.ref td{border:1px solid var(--line); padding:6px 9px; text-align:center; font-variant-numeric:tabular-nums;}
   table.ref th{background:var(--panel-2); color:var(--ink-muted); font-weight:600;}
 
-  footer{color:var(--ink-muted); font-size:13px; max-width:70ch;}
-  footer a{color:inherit;}
+  .page-foot{color:var(--ink-muted); font-size:13px; max-width:70ch;}
+  .page-foot a{color:inherit;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+
+  /* ---------- Charte du site ---------- */
+  [hidden]{ display:none !important; }
+  body{ padding:0; background:var(--paper); }
+  .page-main{ max-width:1120px; padding:32px 16px 0; gap:28px; }
+  h1,h2,h3{ font-weight:800; }
+  .device, details.help{ border:var(--bw) solid var(--ink); box-shadow:var(--sh); }
+  .bezel{ border-bottom:var(--bw) solid var(--ink); }
+  .screen{ border-bottom:var(--bw) solid var(--ink); }
+  .modepick{ border:2px solid var(--ink); background:var(--surface); }
+  .modepick button{ color:var(--ink); font-weight:800; border:2px solid transparent; }
+  .modepick button[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
+  .step .dot{ border-color:var(--ink); color:var(--ink); }
+  .step.done .dot{ background:var(--surface-2); border-color:var(--ink); color:var(--ink); }
+  .step.active .dot{ background:var(--cat); border-color:var(--ink); color:var(--on-cat); }
+  .step .label{ color:var(--muted); font-weight:600; }
+  .step-line{ background:var(--ink); }
+  .progress button{ border:2px solid var(--ink); }
+  .progress button[data-state="ok"]{ background:var(--ok); border-color:var(--ink); }
+  .progress button[data-state="err"]{ background:var(--danger); border-color:var(--ink); opacity:1; }
+  .progress button[aria-current="true"]{ outline:3px solid var(--ink); }
+  input[type="text"], input[type="number"]{ border:2px solid var(--ink); }
+  .choice{ border:2px solid var(--ink); font-weight:600; }
+  .choice[aria-pressed="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
+  .btn{ border:2px solid var(--ink); font-weight:800; box-shadow:var(--sh-sm); transition:transform .1s, box-shadow .1s; }
+  .btn:hover:not([disabled]){ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--shadow-c); }
+  .btn:active:not([disabled]){ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--shadow-c); }
+  .btn-primary, .btn-primary:hover{ background:var(--cat); color:var(--on-cat); border-color:var(--ink); }
+  .btn-ghost, .btn-ghost:hover{ background:var(--surface); color:var(--ink); border-color:var(--ink); }
+  .feedback{ border:2px solid var(--ink); }
+  .hint{ border-left:5px solid var(--ink); color:var(--ink); }
+  .legend{ border-top:2px solid var(--ink); }
+  table.ref th, table.ref td{ border-color:var(--ink); }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <a href="../index.html" style="display:inline-block;margin:0 0 12px;color:inherit;opacity:.75;text-decoration:none;font-size:14px;">← Retour à l'accueil</a>
-
-
-  <header class="masthead">
-    <div class="eyebrow">Station de suivi — TP numération / CAN / codage</div>
-    <div class="title-row">
-      <h1>GreenBox</h1>
-      <span class="tag">Décodeur du système</span>
+<nav class="site-nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="logo" href="../index.html">Site STI</a>
+    <div class="links">
+      <a class="l-1re" href="../index.html#premiere" aria-current="page">1re</a>
+      <a class="l-term" href="../index.html#terminale">Terminale</a>
+      <a class="l-outils" href="../index.html#outils">Outils</a>
     </div>
-    <p class="lede">La GreenBox est le prototype de serre connectée suivi pendant toute la séance : un capteur de luminosité, un CAN qui le numérise, et un système qui restitue l'information sous forme de messages et de couleurs codées. Ici, on décode ce que la GreenBox raconte.</p>
-    <div class="stepper" aria-hidden="true">
-      <div class="step done"><span class="dot">1</span><span class="label">Capter (papier)</span></div>
-      <div class="step-line"></div>
-      <div class="step done"><span class="dot">2</span><span class="label">Convertir (CAN, PC)</span></div>
-      <div class="step-line"></div>
-      <div class="step active"><span class="dot">3</span><span class="label">Coder (ici)</span></div>
-    </div>
-  </header>
+  </div>
+</nav>
+<header class="page-head">
+  <div class="wrap">
+    <span class="tag">TP · Numération, CAN et codage</span>
+    <h1>GreenBox</h1>
+    <p>La GreenBox est le prototype de serre connectée suivi pendant toute la séance : un capteur de luminosité, un CAN qui le numérise, et un système qui restitue l'information sous forme de messages et de couleurs codées. Ici, on décode ce que la GreenBox raconte.</p>
+  </div>
+</header>
+
+<div class="page-main">
+  <div class="stepper" aria-hidden="true">
+    <div class="step done"><span class="dot">1</span><span class="label">Capter (papier)</span></div>
+    <div class="step-line"></div>
+    <div class="step done"><span class="dot">2</span><span class="label">Convertir (CAN, PC)</span></div>
+    <div class="step-line"></div>
+    <div class="step active"><span class="dot">3</span><span class="label">Coder (ici)</span></div>
+  </div>
+
 
   <div class="device">
     <div class="bezel">
@@ -369,11 +369,13 @@
     </div>
   </details>
 
-  <footer>
+  <footer class="page-foot">
     Cette activité prolonge ce que vous venez de faire sur table (numération) et sur PC (CAN) : la même GreenBox qui numérise sa luminosité utilise ensuite ces nombres pour écrire des messages en ASCII et pour piloter son voyant d'état en hexadécimal. Aucune note n'est enregistrée ici — l'activité sert à s'entraîner avant l'évaluation. Terminé les deux premières activités ? L'onglet « Défi bonus » propose l'exercice inverse : coder un message ou une couleur plutôt que les décoder.
   </footer>
 
 </div>
+
+<footer class="site-foot"><div class="wrap">Nicolas CIFERRI</div></footer>
 
 <script>
 (function(){
