@@ -9,6 +9,9 @@ index.html          → page d'accueil (liste des pages par catégorie)
 style.css           → styles propres à l'accueil
 assets/theme.css    → charte graphique commune (couleurs, polices, menu, boutons)
 assets/fonts/       → polices Archivo et DM Mono (hébergées dans le site)
+assets/blockly/     → éditeur de blocs Blockly (copie locale, licence Apache 2.0)
+pages/pyodide/      → Python dans le navigateur (copie locale de Pyodide)
+pages/py-runtime.js → moteur Python commun (exécution, erreurs en français, mode test)
 pages/              → les pages HTML (activités et outils)
 .nojekyll           → indique à GitHub Pages de servir les fichiers tels quels
 ```

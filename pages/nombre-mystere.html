@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="fr" class="cat-1re">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nombre mystère · De l'algorithme au programme</title>
+<link rel="stylesheet" href="../assets/theme.css">
+<style>
+  .page-main{ max-width:1240px; margin:0 auto; padding:32px 16px 0; display:flex; flex-direction:column; gap:22px; }
+
+  /* --- Barre du haut : onglets d'activité + mode test --- */
+  .top-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .act-tabs{ display:flex; gap:4px; padding:4px; background:var(--surface); border:2px solid var(--line); box-shadow:var(--sh-sm); }
+  .act-tab{
+    appearance:none; cursor:pointer; font:inherit; font-weight:800; font-size:15px; color:var(--ink);
+    background:transparent; border:2px solid transparent; padding:8px 14px;
+  }
+  .act-tab[aria-selected="true"]{ background:var(--cat); color:var(--on-cat); border-color:var(--line); }
+  .act-tab small{ display:block; font-family:var(--mono); font-weight:500; font-size:11px; }
+  .test-mode{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:14px; font-weight:600;
+    padding:8px 12px; background:var(--surface); border:2px dashed var(--line);
+  }
+  .test-mode input[type="number"]{
+    width:70px; font:inherit; font-family:var(--mono); padding:4px 6px; border:2px solid var(--line);
+    background:var(--surface); color:var(--ink);
+  }
+  .test-mode label{ display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .test-mode .info{ font-weight:400; color:var(--muted); font-size:13px; }
+
+  .consigne{ margin:0; color:var(--muted); max-width:90ch; }
+  .consigne b{ color:var(--ink); }
+
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .toolbar .spacer{ flex:1; }
+  .py-status{ font-size:13px; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .py-status::before{ content:""; width:9px; height:9px; border-radius:50%; background:#C9A227; }
+  .py-status.ready::before{ background:var(--ok); }
+  .py-status.error::before{ background:var(--danger); }
+
+  /* --- Zone blocs --- */
+  .blocks-grid{ display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(0, 1fr); gap:18px; }
+  @media (max-width:960px){ .blocks-grid{ grid-template-columns:1fr; } }
+  .pane{ background:var(--surface); border:var(--bw) solid var(--line); box-shadow:var(--sh); display:flex; flex-direction:column; min-width:0; }
+  .pane-head{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+    padding:8px 12px; border-bottom:var(--bw) solid var(--line); background:var(--cat); color:var(--on-cat);
+    font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
+  }
+  #blockly-area{ height:560px; min-height:420px; }
+  /* l'éditeur de blocs reste en couleurs claires, même en mode sombre */
+  #blockly-area, .blocklyToolboxDiv, .blocklyToolbox, .blocklyDropDownDiv, .blocklyWidgetDiv{ color:#111; color-scheme:light; }
+  .view-tabs{ display:flex; gap:4px; flex-wrap:wrap; }
+  .page-main > *, .aide, details.aide-item{ min-width:0; }
+  .view-tab{
+    appearance:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--on-cat); background:transparent; border:2px solid transparent; padding:3px 8px;
+  }
+  .view-tab[aria-selected="true"]{ background:var(--surface); color:var(--ink); border-color:var(--line); }
+  .view-pane{ height:560px; overflow:auto; padding:12px 14px; margin:0; }
+  pre.view-pane{ font-family:var(--mono); font-size:14px; line-height:1.55; white-space:pre; color:var(--ink); }
+  #view-python .ln{ display:inline-block; width:2.4em; margin-right:10px; text-align:right; color:var(--muted); user-select:none; }
+  .vide-msg{ font-family:var(--font); color:var(--muted); white-space:normal; }
+  #view-flow{ padding:10px; background:var(--surface); }
+  #view-flow svg{ display:block; margin:0 auto; }
+  .fc-line{ fill:none; stroke:var(--ink); stroke-width:1.6; }
+  .fc-head{ fill:var(--ink); }
+  .fc-shape{ fill:var(--surface); stroke:var(--ink); stroke-width:1.6; }
+  .fc-dec{ fill:var(--surface-2); stroke:var(--ink); stroke-width:1.6; }
+  .fc-term{ fill:var(--cat); stroke:var(--ink); stroke-width:1.6; }
+  .fc-text{ font-family:var(--font); font-size:13px; font-weight:600; fill:var(--ink); }
+  .fc-term + .fc-text{ fill:#111; }
+  .fc-label{ font-family:var(--mono); font-size:12px; font-weight:500; fill:var(--muted); }
+  .fc-dot{ fill:var(--ink); }
+  #views-pane:fullscreen{ overflow:auto; }
+  #views-pane:fullscreen .view-pane{ height:calc(100vh - 60px); }
+  #btn-fullscreen{ border-color:transparent; }
+  .warnings{ margin:0; padding:10px 14px 10px 32px; border-top:2px solid var(--line); background:#FFF0B8; color:#111; font-size:14px; }
+  .warnings li{ margin:2px 0; }
+
+  /* --- Console --- */
+  .output{
+    background:#111111; color:#EDEDE8; padding:12px 14px; overflow:auto; min-height:170px; max-height:420px;
+    font-family:var(--mono); font-size:14px; line-height:1.5; white-space:pre-wrap; word-break:break-word; margin:0;
+  }
+  .output .err{ color:#FF8A78; }
+  .output .info{ color:#9A9A94; font-style:italic; }
+  .output .in{ color:#7FD3E3; }
+  .output .hint{
+    display:block; white-space:normal; margin:10px 0 4px; padding:10px 12px; background:#FFF0B8; color:#111;
+    border:2px solid var(--line); font-family:var(--font); font-size:.92rem;
+  }
+
+  /* --- Zone Python --- */
+  .py-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:860px){ .py-grid{ grid-template-columns:1fr; } }
+  .editor{ display:flex; flex:1; min-height:440px; background:var(--surface); }
+  .gutter{
+    flex:none; width:46px; padding:12px 8px 12px 0; text-align:right; overflow:hidden; user-select:none;
+    background:var(--surface-2); color:var(--muted); border-right:2px solid var(--line);
+    font-family:var(--mono); font-size:14px; line-height:1.55;
+  }
+  .gutter div{ height:calc(14px * 1.55); }
+  .gutter div.err{ background:#FFD6CF; color:#B03A2E; font-weight:700; }
+  textarea.code{
+    flex:1; border:none; outline:none; resize:none; margin:0; padding:12px 14px; background:transparent; color:var(--ink);
+    font-family:var(--mono); font-size:14px; line-height:1.55; tab-size:4; white-space:pre; overflow:auto;
+  }
+  .py-grid .output{ flex:1; max-height:none; min-height:440px; }
+
+  /* --- Aide --- */
+  .aide{ display:flex; flex-direction:column; gap:12px; }
+  .aide h2{
+    display:inline-block; align-self:flex-start; margin:10px 0 4px; padding:5px 12px; font-size:22px; font-weight:800;
+    background:var(--cat); color:var(--on-cat); border:var(--bw) solid var(--line); box-shadow:3px 3px 0 var(--shadow-c);
+  }
+  details.aide-item{ background:var(--surface); border:var(--bw) solid var(--line); box-shadow:var(--sh); }
+  details.aide-item > summary{ cursor:pointer; padding:12px 16px; font-weight:800; }
+  details.aide-item[open] > summary{ border-bottom:2px solid var(--line); }
+  .aide-body{ padding:12px 16px 16px; font-size:15px; }
+  .aide-body p{ margin:.5em 0; }
+  .table-scroll{ overflow-x:auto; }
+  .aide-body table{ border-collapse:collapse; width:100%; font-size:14px; }
+  .aide-body th, .aide-body td{ border:1.5px solid var(--line); padding:6px 10px; text-align:left; vertical-align:top; }
+  .aide-body th{ background:var(--surface-2); }
+  .aide-body code{ font-family:var(--mono); background:var(--surface-2); padding:1px 5px; white-space:nowrap; }
+  .note{ border-left:5px solid var(--line); background:#FFF0B8; color:#111; padding:8px 12px; margin:.7em 0; }
+  .sym{ font-size:20px; }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .gutter div.err{ background:#4A2420; color:#FF8A78; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="logo" href="../index.html">STI2D <span>Saint-Joseph Lasalle - Vannes</span></a>
+    <div class="links">
+      <a class="l-1re" href="../index.html#premiere" aria-current="page">1re</a>
+      <a class="l-term" href="../index.html#terminale">Terminale</a>
+      <a class="l-outils" href="../index.html#outils">Outils</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="wrap">
+    <span class="tag">TP · De l'algorithme au programme</span>
+    <h1>Nombre mystère</h1>
+    <p>Testez votre programme au fur et à mesure : d'abord en blocs (activité 3), avec l'organigramme et le pseudo-code correspondants, puis en Python (activité 4).</p>
+  </div>
+</header>
+
+<div class="page-main">
+
+  <div class="top-bar">
+    <div class="act-tabs" role="tablist" aria-label="Activité">
+      <button class="act-tab" role="tab" data-tab="blocs" aria-selected="true">Activité 3<small>Programmation par blocs</small></button>
+      <button class="act-tab" role="tab" data-tab="python" aria-selected="false">Activité 4<small>Programme Python</small></button>
+    </div>
+    <div class="test-mode">
+      <label><input type="checkbox" id="test-on"> Mode test : nombre « aléatoire » fixé à</label>
+      <input type="number" id="test-value" value="42" min="1" max="1000" aria-label="Valeur du nombre secret en mode test">
+      <span class="info">pratique pour vérifier « plus grand », « plus petit » et « gagné ».</span>
+    </div>
+  </div>
+
+  <!-- ============ Activité 3 : blocs ============ -->
+  <section id="tab-blocs" class="aide-tab" role="tabpanel">
+    <p class="consigne">Choisissez des blocs dans les catégories à gauche et assemblez-les de haut en bas. À droite, le même programme s'affiche <b>en Python</b>, <b>en organigramme</b> et <b>en pseudo-code</b>. Construisez d'abord la version « un seul essai », testez-la, puis ajoutez la boucle et le compteur d'essais.</p>
+
+    <div class="toolbar" style="margin:14px 0;">
+      <button class="btn btn-primary" id="btn-run-blocks">▶ Exécuter les blocs</button>
+      <button class="btn" id="btn-example">Exemple : la majorité</button>
+      <button class="btn" id="btn-export">Enregistrer mes blocs</button>
+      <button class="btn" id="btn-import">Ouvrir des blocs</button>
+      <input type="file" id="file-blocks" accept=".json,application/json" hidden>
+      <button class="btn" id="btn-clear-blocks">Tout effacer</button>
+      <span class="spacer"></span>
+      <span class="py-status" id="py-status">Chargement de Python…</span>
+    </div>
+
+    <div class="blocks-grid">
+      <div class="pane">
+        <div class="pane-head">Mes blocs</div>
+        <div id="blockly-area"></div>
+      </div>
+      <div class="pane" id="views-pane">
+        <div class="pane-head">
+          <span>Le même programme</span>
+          <div class="view-tabs" role="tablist" aria-label="Vue du programme">
+            <button class="view-tab" role="tab" aria-selected="true" aria-controls="view-python">Python</button>
+            <button class="view-tab" role="tab" aria-selected="false" aria-controls="view-flow">Organigramme</button>
+            <button class="view-tab" role="tab" aria-selected="false" aria-controls="view-pseudo">Pseudo-code</button>
+            <button class="view-tab" id="btn-fullscreen" title="Afficher cette vue en plein écran">⛶ Voir en grand</button>
+          </div>
+        </div>
+        <pre class="view-pane" id="view-python"></pre>
+        <div class="view-pane" id="view-flow" hidden></div>
+        <pre class="view-pane" id="view-pseudo" hidden></pre>
+        <ul class="warnings" id="block-warnings" hidden></ul>
+      </div>
+    </div>
+
+    <div class="pane" style="margin-top:18px;">
+      <div class="pane-head">Résultat de l'exécution</div>
+      <pre class="output" id="blocks-output">Cliquez sur « Exécuter les blocs » pour lancer votre programme.</pre>
+    </div>
+  </section>
+
+  <!-- ============ Activité 4 : Python ============ -->
+  <section id="tab-python" role="tabpanel" hidden>
+    <p class="consigne">Les deux premières lignes du TP sont déjà écrites. Continuez le programme en vous aidant du tableau de correspondance (en bas de page) et de votre organigramme. <b>Retapez le code au lieu de le copier depuis les blocs : c'est en tapant que la syntaxe rentre.</b></p>
+
+    <div class="toolbar" style="margin:14px 0;">
+      <button class="btn btn-primary" id="btn-run-python">▶ Exécuter</button>
+      <button class="btn" id="btn-open-python">Ouvrir un .py</button>
+      <button class="btn" id="btn-save-python">Enregistrer</button>
+      <input type="file" id="file-python" accept=".py,.txt,text/plain" hidden>
+      <button class="btn" id="btn-reset-python">Recommencer</button>
+      <span class="spacer"></span>
+      <span class="kbd-hint" style="font-size:13px;color:var(--muted);">Ctrl + Entrée pour exécuter</span>
+    </div>
+
+    <div class="py-grid">
+      <div class="pane">
+        <div class="pane-head">Mon programme Python</div>
+        <div class="editor">
+          <div class="gutter" id="py-gutter" aria-hidden="true"></div>
+          <textarea class="code" id="py-code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Code Python"></textarea>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="pane-head">Résultat</div>
+        <pre class="output" id="py-output">Cliquez sur « Exécuter » pour lancer votre programme.</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Aide ============ -->
+  <section class="aide">
+    <h2>Aide</h2>
+
+    <details class="aide-item" open>
+      <summary>Correspondance pseudo-code · blocs · Python</summary>
+      <div class="aide-body">
+        <div class="table-scroll"><table>
+          <tr><th>Pseudo-code</th><th>Bloc</th><th>Python</th></tr>
+          <tr><td><code>x ← valeur</code></td><td>« mettre x à »</td><td><code>x = valeur</code></td></tr>
+          <tr><td><code>LIRE(x)</code></td><td>« mettre x à » + « demander … et attendre un nombre »</td><td><code>x = int(input("..."))</code></td></tr>
+          <tr><td><code>ECRIRE(x)</code></td><td>« afficher »</td><td><code>print(x)</code></td></tr>
+          <tr><td><code>SI … ALORS … SINON … FINSI</code></td><td>« si … alors … sinon »</td><td><code>if … :</code> / <code>else:</code></td></tr>
+          <tr><td><code>SINON SI</code></td><td>« sinon si »</td><td><code>elif … :</code></td></tr>
+          <tr><td><code>TANT QUE … FAIRE … FINTANTQUE</code></td><td>« répéter tant que »</td><td><code>while … :</code></td></tr>
+          <tr><td><code>ALEATOIRE(1,100)</code></td><td>« nombre aléatoire entre 1 et 100 »</td><td><code>random.randint(1, 100)</code></td></tr>
+          <tr><td><code>x ← x + 1</code></td><td>« ajouter 1 à x »</td><td><code>x = x + 1</code></td></tr>
+        </table></div>
+        <div class="note">En Python, il n'y a pas de FINSI ni de FINTANTQUE : c'est l'<b>indentation</b> (4 espaces en début de ligne) qui indique quelles lignes font partie du « si » ou du « tant que ».</div>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary>Les symboles de l'organigramme</summary>
+      <div class="aide-body">
+        <div class="table-scroll"><table>
+          <tr><th>Symbole</th><th>Signification</th></tr>
+          <tr><td><span class="sym">⬭</span> ovale</td><td>Début ou fin de l'algorithme.</td></tr>
+          <tr><td><span class="sym">▱</span> parallélogramme</td><td>Entrée (lire une donnée) ou sortie (afficher).</td></tr>
+          <tr><td><span class="sym">▭</span> rectangle</td><td>Traitement : un calcul, une affectation.</td></tr>
+          <tr><td><span class="sym">◇</span> losange</td><td>Décision : une question à réponse oui / non, avec deux flèches de sortie.</td></tr>
+        </table></div>
+        <p>Dans l'onglet « Organigramme », une boucle « tant que » est dessinée avec un losange : la flèche « oui » entre dans la boucle, la flèche de retour remonte avant le losange, et la flèche « non » sort de la boucle.</p>
+      </div>
+    </details>
+
+    <details class="aide-item">
+      <summary>Conseils pour tester</summary>
+      <div class="aide-body">
+        <ul>
+          <li>Cochez le <b>mode test</b> en haut de la page : le nombre « aléatoire » prend la valeur choisie. Vous pouvez alors vérifier les trois cas : proposer plus petit, plus grand, puis le bon nombre.</li>
+          <li>Pour <b>arrêter</b> un programme qui pose des questions, cliquez sur « Annuler » dans la fenêtre de saisie.</li>
+          <li>Si un programme tourne <b>en boucle sans fin</b>, il est arrêté automatiquement et un message vous l'indique.</li>
+          <li>« TANT QUE trouve = FAUX » s'écrit en Python <code>while not trouve:</code>. Les deux idées « trouvé = faux » et « pas trouvé » sont les mêmes.</li>
+          <li>Les noms de variables s'écrivent <b>sans espace ni accent</b> : <code>nombre_secret</code>, <code>nb_essais</code>, <code>trouve</code>.</li>
+          <li>Votre travail est gardé dans ce navigateur. Pour le conserver ailleurs, utilisez « Enregistrer ».</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+</div>
+
+<footer class="site-foot"><div class="wrap">Nicolas CIFERRI</div></footer>
+
+<script src="../assets/blockly/blockly_compressed.js"></script>
+<script src="../assets/blockly/blocks_compressed.js"></script>
+<script src="../assets/blockly/msg/fr.js"></script>
+<script src="pyodide/pyodide.js"></script>
+<script src="py-runtime.js"></script>
+<script src="nombre-mystere.js"></script>
+</body>
+</html>
