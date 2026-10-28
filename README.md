@@ -39,3 +39,8 @@ Le site sera ensuite accessible à l'adresse `https://<votre-nom>.github.io/Site
 Par défaut, la page `pages/nombre-mystere.html` affiche à côté des blocs l'organigramme et le pseudo-code, mais **pas le Python** (qui donnerait la réponse de l'activité 4).
 Pour l'afficher (correction, palier +), ajouter `?python=1` à l'adresse :
 `https://n-ciferri.github.io/Site-STI/pages/nombre-mystere.html?python=1`
+
+## Mise à jour des fichiers JavaScript / CSS
+
+Les pages chargent leurs scripts et feuilles de style avec un numéro de version (par exemple `py-runtime.js?v=20261028`).
+Après une modification d'un fichier `.js` ou `.css`, changer ce numéro dans les pages concernées : les navigateurs des élèves prendront alors la nouvelle version au lieu de celle gardée en cache.

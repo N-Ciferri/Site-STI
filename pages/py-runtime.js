@@ -45,6 +45,14 @@
     d.textContent = text;
     this.el.appendChild(d);
   };
+  Console.prototype.figure = function(b64){
+    this.flush();
+    var img = document.createElement("img");
+    img.alt = "Graphique produit par le programme";
+    img.src = "data:image/png;base64," + b64;
+    this.el.appendChild(img);
+    this.hasFigure = true;
+  };
   Console.prototype.text = function(){
     return this.el.textContent + this.parts.map(function(p){ return p[0]; }).join("");
   };
@@ -63,8 +71,10 @@
     ValueError: "Valeur incorrecte : par exemple int(\"abc\"), ou une réponse vide. Il faut taper un nombre entier.",
     ZeroDivisionError: "Division par zéro.",
     IndexError: "Indice hors de la liste : les indices commencent à 0 et vont jusqu'à len(liste) - 1.",
+    KeyError: "Clé absente du dictionnaire.",
     AttributeError: "Cet objet ne possède pas l'attribut ou la fonction demandée. Vérifiez l'orthographe (par exemple random.randint).",
-    ModuleNotFoundError: "Module introuvable : vérifiez le nom après « import »."
+    ModuleNotFoundError: "Module introuvable : vérifiez le nom après « import ». Certaines bibliothèques ne sont pas disponibles dans le navigateur.",
+    RecursionError: "Trop d'appels récursifs : la fonction s'appelle elle-même sans jamais s'arrêter."
   };
 
   function showError(out, err, filename, brief){
@@ -81,7 +91,14 @@
     }
     var fileRe = new RegExp('File "' + filename.replace(/[<>]/g, "\\$&") + '"');
     var start = lines.findIndex(function(l){ return fileRe.test(l); });
-    var shown = start >= 0 ? ["Traceback (most recent call last):"].concat(lines.slice(start)) : lines;
+    // erreur hors du programme de l'élève (par exemple une bibliothèque absente) : seulement la ligne de l'erreur
+    var errLines = lines.filter(function(l){ return /^\w+(Error|Exception)\b/.test(l); });
+    var shown = start >= 0 ? ["Traceback (most recent call last):"].concat(lines.slice(start))
+                           : [errLines.length ? errLines[errLines.length - 1] : msg];
+    // retire les explications techniques ajoutées par Pyodide pour une bibliothèque non téléchargée
+    var notDownloaded = /is included in the Pyodide distribution/.test(msg);
+    var cut = shown.findIndex(function(l){ return /^The module '.*' is included in the Pyodide distribution/.test(l); });
+    if(cut >= 0) shown = shown.slice(0, cut);
     shown = shown.filter(function(l, i, arr){
       if(/File "\/lib\/python|File "\/home\/pyodide|File "<site>/.test(l)) return false;
       if(i > 0 && /^\s/.test(l) && /File "\/lib\/python|File "\/home\/pyodide|File "<site>/.test(arr[i-1])) return false;
@@ -95,7 +112,8 @@
     var errorLine = nums.length ? nums[nums.length - 1] : null;
     var last = lines.filter(function(l){ return l.trim(); }).pop() || "";
     var type = (last.match(/^(\w+)(?::|$)/) || [])[1];
-    if(type && HINTS[type]) out.hint(HINTS[type] + (errorLine ? " (ligne " + errorLine + ")" : ""));
+    if(notDownloaded) out.hint("Cette bibliothèque est téléchargée depuis internet à la première utilisation, et le téléchargement a échoué. Vérifiez la connexion puis réessayez.");
+    else if(type && HINTS[type]) out.hint(HINTS[type] + (errorLine ? " (ligne " + errorLine + ")" : ""));
     return errorLine;
   }
 
@@ -159,6 +177,21 @@
       });
     });
   };
+
+  window.siteAddFigure = function(b64){ if(current) current.figure(b64); };
+  var MPL_SETUP = [
+    "import matplotlib",
+    "matplotlib.use('Agg')",
+    "import matplotlib.pyplot as _plt, io as _io, base64 as _b64",
+    "from js import siteAddFigure as _siteAddFigure",
+    "def _site_show(*args, **kwargs):",
+    "    for _n in _plt.get_fignums():",
+    "        _buf = _io.BytesIO()",
+    "        _plt.figure(_n).savefig(_buf, format='png', dpi=100, bbox_inches='tight')",
+    "        _siteAddFigure(_b64.b64encode(_buf.getvalue()).decode())",
+    "    _plt.close('all')",
+    "_plt.show = _site_show"
+  ].join("\n");
 
   var SETUP = [
     "import builtins, sys",
@@ -256,9 +289,14 @@
     var ns = null;
     try{
       var py = await load();
+      var status = opts.onStatus || function(){};
+      var needsMpl = /^\s*(import|from)\s+matplotlib/m.test(code);
       if(/^\s*(import|from)\s+\w/m.test(code)){
+        status("Chargement des bibliothèques…");
         await py.loadPackagesFromImports(code, { messageCallback:function(){}, errorCallback:function(){} });
       }
+      status("Exécution…");
+      if(needsMpl) py.runPython(MPL_SETUP, { filename:"<site>" });
       if(opts.fixedSecret != null && /\brandom\b/.test(code)){
         out.parts.push(["Mode test : le nombre « aléatoire » vaut " + opts.fixedSecret + ".\n", "info"]);
       }
@@ -273,8 +311,9 @@
       } finally {
         py.runPython("import sys\nsys.settrace(None)\nsys.stdout.flush()", { filename:"<site>" });
       }
+      if(needsMpl) py.runPython("_site_show()", { filename:"<site>" });
       out.newline();
-      if(!out.text().replace(/^Mode test.*\n/, "")) out.parts.push(["(le programme n'a rien affiché)\n", "info"]);
+      if(!out.text().replace(/^Mode test.*\n/, "") && !out.hasFigure) out.parts.push(["(le programme n'a rien affiché)\n", "info"]);
       result.ok = true;
     }catch(e){
       var msg = String(e && e.message || e);

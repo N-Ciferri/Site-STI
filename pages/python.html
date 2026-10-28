@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Éditeur Python</title>
-<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="../assets/theme.css?v=20261028">
 <style>
   :root{
     --bg:var(--paper);
@@ -117,6 +117,13 @@
   .output .err{ color:var(--out-err); }
   .output .info{ color:var(--out-muted); font-style:italic; }
   .output .in{ color:#7FD3E3; }
+  .output .ask{ display:inline; }
+  .output .console-input{
+    font:inherit; color:#7FD3E3; background:#2A2A2A; border:none; border-bottom:2px solid #7FD3E3;
+    outline:none; padding:0 4px; width:min(260px, 60%);
+  }
+  .output .console-input::placeholder{ color:#6F7B80; font-style:italic; }
+  .btn-stop:disabled{ display:none; }
   .output img{ display:block; max-width:100%; background:#fff; border-radius:0; margin:8px 0; }
   .output .hint{
     display:block; white-space:normal; margin:10px 0 4px; padding:10px 12px; border-radius:0;
@@ -251,6 +258,7 @@
 
   <div class="toolbar">
     <button class="btn btn-run" id="btn-run" disabled>▶ Exécuter</button>
+    <button class="btn btn-stop" id="btn-stop" disabled>■ Arrêter</button>
     <select id="examples" aria-label="Charger un exemple">
       <option value="">Exemples…</option>
     </select>
@@ -300,7 +308,8 @@
           <li>En cas d'erreur, la ligne fautive passe en rouge et une explication s'affiche sous le message.</li>
           <li>Le programme est gardé dans ce navigateur. Pour le conserver ailleurs, utilisez « Enregistrer ».</li>
           <li>Les graphiques <code>matplotlib</code> s'affichent sous forme d'image (la première fois, quelques secondes de téléchargement).</li>
-          <li>Attention aux boucles infinies (<code>while True</code> sans <code>break</code>) : la page se bloque, il faut la recharger.</li>
+          <li>Quand le programme pose une question (<code>input</code>), <b>tapez la réponse dans la zone Résultat</b> puis appuyez sur Entrée. Le bouton « ■ Arrêter » interrompt le programme.</li>
+          <li>Une boucle infinie (<code>while True</code> sans <code>break</code>) est arrêtée automatiquement, avec un message d'explication.</li>
         </ul>
         <p>Les boutons « Essayer » de cette aide copient l'exemple dans l'éditeur.</p>
       </div>
@@ -386,7 +395,7 @@ print(f"{nom} a eu {note}/20")</pre></div>
     <details class="aide-item">
       <summary><span>Demander une valeur : <code>input()</code></span></summary>
       <div class="aide-body">
-        <p><code>input("question")</code> affiche la question (<b>entre guillemets</b>) et attend la réponse de l'utilisateur.</p>
+        <p><code>input("question")</code> affiche la question (<b>entre guillemets</b>) et attend la réponse de l'utilisateur, qui la tape dans la zone Résultat.</p>
         <div class="note"><code>input()</code> renvoie <b>toujours une chaîne de caractères</b> (<code>str</code>), même si on tape un nombre. Pour calculer, il faut convertir avec <code>int(...)</code> ou <code>float(...)</code>.</div>
         <div class="ex"><button class="btn try">Essayer</button><pre>prenom = input("Ton prénom ? ")            # texte : pas de conversion
 age = int(input("Ton âge ? "))             # nombre entier
@@ -435,8 +444,9 @@ saluer("Tom")</pre></div>
 
 <footer class="site-foot"><div class="wrap">Nicolas CIFERRI</div></footer>
 
-<script src="python-docs.js"></script>
+<script src="python-docs.js?v=20261028"></script>
 <script src="pyodide/pyodide.js"></script>
+<script src="py-runtime.js?v=20261028"></script>
 <script>
 (function(){
   "use strict";
@@ -461,6 +471,7 @@ saluer("Tom")</pre></div>
 
   var el = {
     run: document.getElementById("btn-run"),
+    stop: document.getElementById("btn-stop"),
     examples: document.getElementById("examples"),
     open: document.getElementById("btn-open"),
     save: document.getElementById("btn-save"),
@@ -556,102 +567,18 @@ saluer("Tom")</pre></div>
     }
   });
 
-  /* ---------- Sortie ---------- */
-  function append(text, cls){
-    var span = document.createElement("span");
-    if(cls) span.className = cls;
-    span.textContent = text;
-    el.output.appendChild(span);
-    el.output.scrollTop = el.output.scrollHeight;
-  }
-  function appendHint(text){
-    var d = document.createElement("span");
-    d.className = "hint";
-    d.textContent = "💡 " + text;
-    el.output.appendChild(d);
-  }
-  window.siteAddFigure = function(b64){
-    var img = document.createElement("img");
-    img.alt = "Graphique produit par le programme";
-    img.src = "data:image/png;base64," + b64;
-    el.output.appendChild(img);
-  };
+  /* ---------- Sortie : gérée par le moteur commun (py-runtime.js) ---------- */
   el.clear.addEventListener("click", function(){ el.output.innerHTML = ""; });
 
-  /* ---------- Messages d'erreur en français ---------- */
-  var HINTS = {
-    SyntaxError: "Erreur de syntaxe : le code n'est pas écrit correctement. Vérifiez les parenthèses, les guillemets et les deux-points « : » à la fin des lignes if, for, while, def…",
-    IndentationError: "Erreur d'indentation : les espaces en début de ligne ne sont pas cohérents. Les lignes d'un même bloc doivent commencer au même niveau (4 espaces).",
-    TabError: "Mélange de tabulations et d'espaces pour l'indentation : utilisez uniquement des espaces.",
-    NameError: "Nom inconnu : une variable ou une fonction est utilisée avant d'avoir été définie, ou son nom est mal orthographié (attention aux majuscules).",
-    TypeError: "Erreur de type : une opération mélange des types incompatibles, par exemple un texte et un nombre. input() renvoie toujours du texte : utilisez int(...) ou float(...) pour le convertir.",
-    ValueError: "Valeur incorrecte : par exemple int(\"abc\") ou float(\"12,5\") (en Python, le séparateur décimal est le point).",
-    ZeroDivisionError: "Division par zéro.",
-    IndexError: "Indice hors de la liste : les indices commencent à 0 et vont jusqu'à len(liste) - 1.",
-    KeyError: "Clé absente du dictionnaire.",
-    AttributeError: "Cet objet ne possède pas l'attribut ou la méthode demandée. Vérifiez l'orthographe.",
-    ModuleNotFoundError: "Module introuvable : il n'existe pas, ou il n'est pas disponible dans le navigateur.",
-    RecursionError: "Trop d'appels récursifs : la fonction s'appelle elle-même sans jamais s'arrêter."
-  };
-
-  function showError(err){
-    var msg = String(err && err.message || err);
-    // garde uniquement les lignes qui concernent le programme de l'élève
-    var lines = msg.split("\n");
-    var start = lines.findIndex(function(l){ return /File "<exec>"/.test(l); });
-    var shown = start >= 0 ? ["Traceback (most recent call last):"].concat(lines.slice(start)) : lines;
-    // retire les explications techniques ajoutées par Pyodide
-    var cut = shown.findIndex(function(l){ return /^The module '.*' is included in the Pyodide distribution/.test(l); });
-    var notDownloaded = cut >= 0;
-    if(notDownloaded) shown = shown.slice(0, cut);
-    shown = shown.filter(function(l, i, arr){
-      if(/File "\/lib\/python/.test(l) || /File "\/home\/pyodide/.test(l)) return false;
-      if(i > 0 && /File "\/lib\/python|File "\/home\/pyodide/.test(arr[i-1])) return false;
-      return true;
-    });
-    var txt = el.output.textContent;
-    if(txt && txt.slice(-1) !== "\n") append("\n");
-    append(shown.join("\n").trim() + "\n", "err");
-
-    var nums = (msg.match(/File "<exec>", line (\d+)/g) || []).map(function(m){ return +m.match(/(\d+)$/)[1]; });
-    if(nums.length){ errorLine = nums[nums.length - 1]; updateGutter(); }
-
-    var last = lines.filter(function(l){ return l.trim(); }).pop() || "";
-    var type = (last.match(/^(\w+)(?::|$)/) || [])[1];
-    if(notDownloaded) appendHint("Cette bibliothèque est téléchargée depuis internet à la première utilisation, et le téléchargement a échoué. Vérifiez la connexion puis réessayez.");
-    else if(type && HINTS[type]) appendHint(HINTS[type] + (errorLine ? " (ligne " + errorLine + ")" : ""));
-  }
-
   /* ---------- Python ---------- */
-  var pyodide = null, running = false;
-
-  function askInput(question){
-    var answer = window.prompt(question || "Entrée :", "");
-    if(answer === null) answer = "";
-    if(question) append(question);
-    append(answer + "\n", "in");
-    return answer;
-  }
-  window.siteAskInput = askInput;
+  var pyodide = null;
 
   function setStatus(text, cls){
     el.statusText.textContent = text;
     el.status.className = "status" + (cls ? " " + cls : "");
   }
 
-  var MPL_SETUP = [
-    "import matplotlib",
-    "matplotlib.use('Agg')",
-    "import matplotlib.pyplot as _plt, io as _io, base64 as _b64",
-    "from js import siteAddFigure as _siteAddFigure",
-    "def _site_show(*args, **kwargs):",
-    "    for _n in _plt.get_fignums():",
-    "        _buf = _io.BytesIO()",
-    "        _plt.figure(_n).savefig(_buf, format='png', dpi=100, bbox_inches='tight')",
-    "        _siteAddFigure(_b64.b64encode(_buf.getvalue()).decode())",
-    "    _plt.close('all')",
-    "_plt.show = _site_show"
-  ].join("\n");
+  // les graphiques matplotlib sont gérés par le moteur commun
 
   /* ---------- Bibliothèques importées : documentation ---------- */
   // Lit la documentation intégrée à Python (docstrings) pour un module donné
@@ -801,7 +728,7 @@ saluer("Tom")</pre></div>
 
   async function loadTechDoc(name, box, tech){
     if(!pyodide){ pendingDocs.push(function(){ loadTechDoc(name, box, tech); }); return; }
-    if(running){ setTimeout(function(){ loadTechDoc(name, box, tech); }, 300); return; }
+    if(SitePython.isRunning()){ setTimeout(function(){ loadTechDoc(name, box, tech); }, 300); return; }
     tech.dataset.loaded = "1";
     box.innerHTML = "";
     var info = mk("p", "tech-info", "Chargement de la documentation…");
@@ -918,61 +845,30 @@ saluer("Tom")</pre></div>
 
   async function init(){
     try{
-      pyodide = await loadPyodide({ indexURL: "pyodide/", packageBaseUrl: PACKAGES_URL });
-      // sortie transmise telle quelle : un print(..., end="") apparaît dès que Python vide son tampon
-      function writer(cls){
-        var decoder = new TextDecoder();
-        return { isatty: false, write: function(buf){ append(decoder.decode(buf, { stream:true }), cls); return buf.length; } };
-      }
-      pyodide.setStdout(writer());
-      pyodide.setStderr(writer("err"));
-      pyodide.setStdin({ stdin: function(){ return askInput(""); } });
-      // input() passe sa question directement à la fenêtre de saisie
-      pyodide.runPython("import builtins, sys\nfrom js import siteAskInput as _ask\ndef _site_input(prompt=''):\n    sys.stdout.flush()\n    return _ask(str(prompt))\nbuiltins.input = _site_input");
+      pyodide = await SitePython.load();
       pyodide.runPython(DOC_HELPER);
       pythonReady();
-      setStatus("Python prêt", "ready");
-      el.run.disabled = false;
     }catch(e){
       setStatus("Python n'a pas pu se charger", "error");
-      append("Impossible de charger Python : " + e + "\nEssayez de recharger la page.\n", "err");
+      el.output.textContent = "Impossible de charger Python : " + e + "\nEssayez de recharger la page.\n";
     }
   }
 
   async function run(){
-    if(!pyodide || running) return;
-    running = true;
+    if(!pyodide || SitePython.isRunning()) return;
     el.run.disabled = true;
-    el.output.innerHTML = "";
+    el.stop.disabled = false;
     errorLine = null; updateGutter();
-    var code = el.code.value;
-    var ns = pyodide.globals.get("dict")();
-    try{
-      setStatus("Exécution…");
-      var needsMpl = /^\s*(import|from)\s+matplotlib/m.test(code);
-      if(/^\s*(import|from)\s+\w/m.test(code)){
-        setStatus("Chargement des bibliothèques…");
-        await pyodide.loadPackagesFromImports(code, { messageCallback: function(){}, errorCallback: function(){} });
-      }
-      if(needsMpl) pyodide.runPython(MPL_SETUP);
-      await pyodide.runPythonAsync(code, { globals: ns, filename: "<exec>" });
-      pyodide.runPython("import sys\nsys.stdout.flush()");
-      if(needsMpl) pyodide.runPython("_site_show()");
-      if(!el.output.textContent && !el.output.querySelector("img")) append("(le programme n'a rien affiché)\n", "info");
-      setStatus("Python prêt", "ready");
-    }catch(e){
-      try{ pyodide.runPython("import sys\nsys.stdout.flush()"); }catch(_){}
-      showError(e);
-      setStatus("Erreur dans le programme", "error");
-    }finally{
-      ns.destroy();
-      running = false;
-      el.run.disabled = false;
-    }
+    var r = await SitePython.run(el.code.value, { output:el.output, filename:"<exec>", onStatus:function(t){ setStatus(t); } });
+    if(r.errorLine){ errorLine = r.errorLine; updateGutter(); }
+    if(r.ok) setStatus("Python prêt", "ready"); else setStatus("Erreur dans le programme", "error");
+    el.run.disabled = false;
+    el.stop.disabled = true;
   }
 
   /* ---------- Boutons ---------- */
   el.run.addEventListener("click", run);
+  el.stop.addEventListener("click", function(){ SitePython.stop(); });
 
   EXAMPLES.forEach(function(ex, i){
     var o = document.createElement("option");
