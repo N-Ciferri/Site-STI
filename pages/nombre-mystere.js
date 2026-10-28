@@ -416,6 +416,18 @@
   };
 
   var current = null, viewTimer = null;
+
+  // L'organigramme se réduit pour tenir dans la largeur de sa zone (sans devenir illisible),
+  // sinon il reste centré avec un défilement horizontal.
+  function fitFlow(){
+    var box = $("view-flow"), svg = box.querySelector("svg");
+    if(!svg || box.hidden || !box.clientWidth) return;
+    var w = +svg.getAttribute("width"), h = +svg.getAttribute("height");
+    var scale = Math.max(0.75, Math.min(1, (box.clientWidth - 24) / w));
+    svg.style.width = Math.round(w * scale) + "px";
+    svg.style.height = Math.round(h * scale) + "px";
+    box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2;
+  }
   function refreshViews(){
     current = translate(ws);
     var lines = current.python ? current.python.replace(/\n$/, "").split("\n") : [];
@@ -424,6 +436,7 @@
       : '<span class="vide-msg">Assemblez des blocs : le code Python apparaîtra ici.</span>';
     $("view-pseudo").textContent = current.pseudo;
     $("view-flow").innerHTML = current.svg;
+    fitFlow();
     var w = $("block-warnings");
     w.innerHTML = "";
     current.warnings.forEach(function(m){ var li = document.createElement("li"); li.textContent = m; w.appendChild(li); });
@@ -461,14 +474,15 @@
     var hidden = grid.classList.toggle("views-hidden");
     this.textContent = hidden ? "Afficher les vues" : "Masquer les vues";
     Blockly.svgResize(ws);
+    fitFlow();
   });
   $("btn-blocks-full").addEventListener("click", function(){
     if(document.fullscreenElement) document.exitFullscreen();
-    else if($("blocks-pane").requestFullscreen) $("blocks-pane").requestFullscreen();
+    else if($("blocks-grid").requestFullscreen) $("blocks-grid").requestFullscreen();
   });
   document.addEventListener("fullscreenchange", function(){
-    $("btn-blocks-full").textContent = document.fullscreenElement === $("blocks-pane") ? "Quitter le plein écran" : "⛶ Plein écran";
-    setTimeout(function(){ Blockly.svgResize(ws); }, 50);
+    $("btn-blocks-full").textContent = document.fullscreenElement === $("blocks-grid") ? "Quitter le plein écran" : "⛶ Plein écran";
+    setTimeout(function(){ Blockly.svgResize(ws); fitFlow(); }, 50);
   });
 
   /* Onglets de vues (organigramme / pseudo-code / Python) */
@@ -481,6 +495,7 @@
     t.addEventListener("click", function(){
       document.querySelectorAll(".view-tab[aria-controls]").forEach(function(o){ o.setAttribute("aria-selected", String(o === t)); });
       document.querySelectorAll(".view-pane").forEach(function(p){ p.hidden = p.id !== t.getAttribute("aria-controls"); });
+      fitFlow();
     });
   });
 
@@ -495,7 +510,7 @@
   document.querySelectorAll(".act-tab").forEach(function(t){
     t.addEventListener("click", function(){ showTab(t.dataset.tab); });
   });
-  window.addEventListener("resize", function(){ Blockly.svgResize(ws); });
+  window.addEventListener("resize", function(){ Blockly.svgResize(ws); fitFlow(); });
 
   /* Exécution des blocs */
   async function runBlocks(){
@@ -510,9 +525,12 @@
       return;
     }
     $("btn-run-blocks").disabled = true;
+    $("btn-stop-blocks").disabled = false;
     await SitePython.run(current.python, { output:out, filename:"<blocs>", fixedSecret:fixedSecret(), briefErrors:!showPython });
     $("btn-run-blocks").disabled = false;
+    $("btn-stop-blocks").disabled = true;
   }
+  $("btn-stop-blocks").addEventListener("click", function(){ SitePython.stop(); });
   $("btn-run-blocks").addEventListener("click", runBlocks);
 
   $("btn-example").addEventListener("click", function(){
@@ -556,10 +574,13 @@
 
   async function runPython(){
     $("btn-run-python").disabled = true;
+    $("btn-stop-python").disabled = false;
     var r = await SitePython.run(editor.getValue(), { output:$("py-output"), filename:"<exec>", fixedSecret:fixedSecret() });
     if(r && r.errorLine) editor.setErrorLine(r.errorLine);
     $("btn-run-python").disabled = false;
+    $("btn-stop-python").disabled = true;
   }
+  $("btn-stop-python").addEventListener("click", function(){ SitePython.stop(); });
   $("btn-run-python").addEventListener("click", runPython);
   $("btn-reset-python").addEventListener("click", function(){
     if(confirm("Revenir au début du programme (les deux premières lignes du TP) ? Votre code actuel sera effacé.")) editor.setValue(PY_START);

@@ -6,7 +6,11 @@
 <title>Nombre mystère · De l'algorithme au programme</title>
 <link rel="stylesheet" href="../assets/theme.css">
 <style>
-  .page-main{ max-width:1240px; margin:0 auto; padding:32px 16px 0; display:flex; flex-direction:column; gap:22px; }
+  .page-main{ max-width:none; margin:0; padding:24px clamp(12px, 2vw, 32px) 0; display:flex; flex-direction:column; gap:20px; }
+  /* cette page utilise toute la largeur de l'écran */
+  .site-nav .wrap, .page-head .wrap, .site-foot .wrap{ max-width:none; padding-left:clamp(12px, 2vw, 32px); padding-right:clamp(12px, 2vw, 32px); }
+  .page-head{ padding:22px 0 20px; }
+  .page-head h1{ font-size:clamp(30px, 4vw, 48px); }
 
   /* --- Barre du haut : onglets d'activité + mode test --- */
   .top-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
@@ -39,18 +43,30 @@
   .py-status.error::before{ background:var(--danger); }
 
   /* --- Zone blocs --- */
-  .blocks-grid{ display:grid; grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); gap:18px; }
-  .blocks-grid.views-hidden{ grid-template-columns:minmax(0, 1fr); }
+  .blocks-grid{ display:grid; grid-template-columns:minmax(0, 1.9fr) minmax(380px, 1fr); gap:18px; }
+  .blocks-grid.views-hidden{ grid-template-columns:minmax(0, 2.8fr) minmax(320px, 1fr); }
   .blocks-grid.views-hidden #views-pane{ display:none; }
-  @media (max-width:960px){ .blocks-grid{ grid-template-columns:1fr; } }
+  .side-col{ display:flex; flex-direction:column; gap:18px; min-width:0; min-height:0; }
+  #views-pane{ flex:1 1 0; min-height:0; }
+  #views-pane .view-pane{ flex:1 1 0; min-height:0; height:auto; }
+  #result-pane{ flex:0 0 clamp(240px, 34vh, 380px); min-height:0; }
+  .blocks-grid.views-hidden #result-pane{ flex:1 1 0; }
+  #result-pane .output{ flex:1; min-height:0; max-height:none; }
+  #blocks-grid:fullscreen{ background:var(--paper); padding:12px; overflow:auto; }
+  #blocks-grid:fullscreen #blockly-area{ height:calc(100vh - 70px); }
+  @media (max-width:960px){
+    .blocks-grid, .blocks-grid.views-hidden{ grid-template-columns:1fr; }
+    #views-pane .view-pane{ height:440px; flex:none; }
+    #result-pane{ flex:none; }
+    #result-pane .output{ height:260px; }
+  }
   .pane{ background:var(--surface); border:var(--bw) solid var(--line); box-shadow:var(--sh); display:flex; flex-direction:column; min-width:0; }
   .pane-head{
     display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
     padding:8px 12px; border-bottom:var(--bw) solid var(--line); background:var(--cat); color:var(--on-cat);
     font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
   }
-  #blockly-area{ height:clamp(560px, calc(100vh - 150px), 920px); }
-  #blocks-pane:fullscreen #blockly-area{ height:calc(100vh - 42px); }
+  #blockly-area{ height:clamp(560px, calc(100vh - 120px), 1100px); }
   .pane-head .head-btn{
     appearance:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
     color:var(--on-cat); background:transparent; border:2px solid var(--on-cat); padding:2px 8px;
@@ -94,6 +110,14 @@
   .output .err{ color:#FF8A78; }
   .output .info{ color:#9A9A94; font-style:italic; }
   .output .in{ color:#7FD3E3; }
+  .output .ask{ display:inline; }
+  .output .console-input{
+    font:inherit; color:#7FD3E3; background:#2A2A2A; border:none; border-bottom:2px solid #7FD3E3;
+    outline:none; padding:0 4px; width:min(260px, 60%);
+  }
+  .output .console-input::placeholder{ color:#6F7B80; font-style:italic; }
+  .btn-stop{ background:var(--surface); }
+  .btn-stop:disabled{ display:none; }
   .output .hint{
     display:block; white-space:normal; margin:10px 0 4px; padding:10px 12px; background:#FFF0B8; color:#111;
     border:2px solid var(--line); font-family:var(--font); font-size:.92rem;
@@ -181,6 +205,7 @@
 
     <div class="toolbar" style="margin:14px 0;">
       <button class="btn btn-primary" id="btn-run-blocks">▶ Exécuter les blocs</button>
+      <button class="btn btn-stop" id="btn-stop-blocks" disabled>■ Arrêter</button>
       <button class="btn" id="btn-example">Exemple : la majorité</button>
       <button class="btn" id="btn-export">Enregistrer mes blocs</button>
       <button class="btn" id="btn-import">Ouvrir des blocs</button>
@@ -190,7 +215,7 @@
       <span class="py-status" id="py-status">Chargement de Python…</span>
     </div>
 
-    <div class="blocks-grid">
+    <div class="blocks-grid" id="blocks-grid">
       <div class="pane" id="blocks-pane">
         <div class="pane-head">
           <span>Mes blocs</span>
@@ -201,6 +226,7 @@
         </div>
         <div id="blockly-area"></div>
       </div>
+      <div class="side-col">
       <div class="pane" id="views-pane">
         <div class="pane-head">
           <span>Le même programme</span>
@@ -216,11 +242,11 @@
         <pre class="view-pane" id="view-pseudo" hidden></pre>
         <ul class="warnings" id="block-warnings" hidden></ul>
       </div>
-    </div>
-
-    <div class="pane" style="margin-top:18px;">
-      <div class="pane-head">Résultat de l'exécution</div>
-      <pre class="output" id="blocks-output">Cliquez sur « Exécuter les blocs » pour lancer votre programme.</pre>
+      <div class="pane" id="result-pane">
+        <div class="pane-head">Résultat de l'exécution</div>
+        <pre class="output" id="blocks-output">Cliquez sur « Exécuter les blocs » pour lancer votre programme. Les réponses se tapent ici, directement dans cette zone.</pre>
+      </div>
+      </div>
     </div>
   </section>
 
@@ -230,6 +256,7 @@
 
     <div class="toolbar" style="margin:14px 0;">
       <button class="btn btn-primary" id="btn-run-python">▶ Exécuter</button>
+      <button class="btn btn-stop" id="btn-stop-python" disabled>■ Arrêter</button>
       <button class="btn" id="btn-open-python">Ouvrir un .py</button>
       <button class="btn" id="btn-save-python">Enregistrer</button>
       <input type="file" id="file-python" accept=".py,.txt,text/plain" hidden>
@@ -248,7 +275,7 @@
       </div>
       <div class="pane">
         <div class="pane-head">Résultat</div>
-        <pre class="output" id="py-output">Cliquez sur « Exécuter » pour lancer votre programme.</pre>
+        <pre class="output" id="py-output">Cliquez sur « Exécuter » pour lancer votre programme. Les réponses se tapent ici, directement dans cette zone.</pre>
       </div>
     </div>
   </section>
@@ -294,7 +321,7 @@
       <div class="aide-body">
         <ul>
           <li>Cochez le <b>mode test</b> en haut de la page : le nombre « aléatoire » prend la valeur choisie. Vous pouvez alors vérifier les trois cas : proposer plus petit, plus grand, puis le bon nombre.</li>
-          <li>Pour <b>arrêter</b> un programme qui pose des questions, cliquez sur « Annuler » dans la fenêtre de saisie.</li>
+          <li>Quand le programme pose une question, <b>tapez la réponse dans la zone « Résultat »</b> puis appuyez sur Entrée. Le bouton « ■ Arrêter » interrompt le programme.</li>
           <li>Si un programme tourne <b>en boucle sans fin</b>, il est arrêté automatiquement et un message vous l'indique.</li>
           <li>« TANT QUE trouve = FAUX » s'écrit en Python <code>while not trouve:</code>. Les deux idées « trouvé = faux » et « pas trouvé » sont les mêmes.</li>
           <li>Les noms de variables s'écrivent <b>sans espace ni accent</b> : <code>nombre_secret</code>, <code>nb_essais</code>, <code>trouve</code>.</li>

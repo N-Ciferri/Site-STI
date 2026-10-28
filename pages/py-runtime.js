@@ -121,6 +121,45 @@
     return answer;
   };
 
+  /* Saisie directement dans la console : renvoie une promesse résolue quand l'élève appuie sur Entrée.
+     SitePython.stop() la résout avec « undefined » (None en Python) pour arrêter le programme. */
+  var pendingInput = null;
+  window.siteConsoleInput = function(question){
+    var out = current;
+    if(!out) return Promise.resolve(undefined);
+    out.flush();
+    return new Promise(function(resolve){
+      var line = document.createElement("span");
+      line.className = "ask";
+      if(question){ var q = document.createElement("span"); q.textContent = question; line.appendChild(q); }
+      var field = document.createElement("input");
+      field.type = "text";
+      field.className = "console-input";
+      field.autocomplete = "off";
+      field.spellcheck = false;
+      field.setAttribute("aria-label", question ? "Réponse à : " + question : "Réponse du programme");
+      field.placeholder = "tapez votre réponse puis Entrée";
+      line.appendChild(field);
+      out.el.appendChild(line);
+      out.el.scrollTop = out.el.scrollHeight;
+      line.scrollIntoView({ block:"nearest" });
+      field.focus({ preventScroll:true });
+      pendingInput = function(value){
+        pendingInput = null;
+        var answer = document.createElement("span");
+        answer.className = "in";
+        answer.textContent = value === undefined ? "" : value;
+        line.replaceChild(answer, field);
+        line.appendChild(document.createTextNode("\n"));
+        out.size += (question || "").length + (value || "").length + 1;
+        resolve(value);
+      };
+      field.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){ e.preventDefault(); if(pendingInput) pendingInput(field.value); }
+      });
+    });
+  };
+
   var SETUP = [
     "import builtins, sys",
     "from js import siteAskInput as _ask",
@@ -134,6 +173,38 @@
     "    return r",
     "builtins.input = _site_input",
     "builtins.ArretProgramme = ArretProgramme",
+    "from js import siteConsoleInput as _cin",
+    "async def _site_ainput(prompt=''):",
+    "    sys.stdout.flush()",
+    "    r = await _cin(str(prompt))",
+    "    if r is None:",
+    "        raise ArretProgramme()",
+    "    return r",
+    "builtins._site_ainput = _site_ainput",
+    "import ast, inspect",
+    "class _SiteInput(ast.NodeTransformer):",
+    "    def visit_Call(self, node):",
+    "        self.generic_visit(node)",
+    "        if isinstance(node.func, ast.Name) and node.func.id == 'input':",
+    "            new = ast.Await(value=ast.Call(func=ast.Name(id='_site_ainput', ctx=ast.Load()), args=node.args, keywords=node.keywords))",
+    "            return ast.copy_location(new, node)",
+    "        return node",
+    "def _site_input_hors_programme_principal(tree):",
+    "    for n in ast.walk(tree):",
+    "        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef, ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):",
+    "            for m in ast.walk(n):",
+    "                if isinstance(m, ast.Call) and isinstance(m.func, ast.Name) and m.func.id == 'input':",
+    "                    return True",
+    "    return False",
+    "async def _site_exec(src, filename, ns):",
+    "    tree = ast.parse(src, filename)",
+    "    # input() du programme principal -> saisie dans la console ; dans une fonction -> fenêtre de saisie",
+    "    if not _site_input_hors_programme_principal(tree):",
+    "        tree = ast.fix_missing_locations(_SiteInput().visit(tree))",
+    "    code = compile(tree, filename, 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)",
+    "    r = eval(code, ns)",
+    "    if inspect.iscoroutine(r):",
+    "        await r",
     "class BoucleInfinie(Exception):",
     "    pass",
     "_site_count = [0]",
@@ -188,15 +259,17 @@
       if(/^\s*(import|from)\s+\w/m.test(code)){
         await py.loadPackagesFromImports(code, { messageCallback:function(){}, errorCallback:function(){} });
       }
-      if(opts.fixedSecret != null){
+      if(opts.fixedSecret != null && /\brandom\b/.test(code)){
         out.parts.push(["Mode test : le nombre « aléatoire » vaut " + opts.fixedSecret + ".\n", "info"]);
       }
       // « undefined » devient None en Python (null deviendrait un objet JavaScript)
       py.globals.get("_site_prepare")(opts.fixedSecret == null ? undefined : opts.fixedSecret);
       ns = py.globals.get("dict")();
       py.runPython("import sys\nsys.settrace(_site_trace)", { filename:"<site>" });
+      var g = py.globals;
+      g.set("_site_src", code); g.set("_site_fn", filename); g.set("_site_ns", ns);
       try{
-        await py.runPythonAsync(code, { globals:ns, filename:filename });
+        await py.runPythonAsync("await _site_exec(_site_src, _site_fn, _site_ns)", { filename:"<site>" });
       } finally {
         py.runPython("import sys\nsys.settrace(None)\nsys.stdout.flush()", { filename:"<site>" });
       }
@@ -210,7 +283,7 @@
         out.parts.push(["Programme arrêté : il a affiché trop de texte.\n", "err"]);
         out.hint("Votre programme tourne probablement en boucle sans fin : la condition du « tant que » ne devient jamais fausse. Vérifiez qu'une variable de la condition change bien à l'intérieur de la boucle.");
       } else if(/ArretProgramme/.test(msg)){
-        out.parts.push(["Programme arrêté (saisie annulée).\n", "info"]);
+        out.parts.push(["Programme arrêté.\n", "info"]);
         result.ok = true;
       } else if(/BoucleInfinie/.test(msg)){
         out.parts.push(["Programme arrêté : il a exécuté plus de " + MAX_LINES.toLocaleString("fr-FR") + " instructions.\n", "err"]);
@@ -229,7 +302,11 @@
     return result;
   }
 
-  window.SitePython = { load:load, run:run, isRunning:function(){ return running; } };
+  // Arrête un programme qui attend une réponse
+  function stop(){ if(pendingInput) pendingInput(undefined); }
+
+  window.SitePython = { load:load, run:run, stop:stop, isRunning:function(){ return running; },
+                        isWaiting:function(){ return !!pendingInput; } };
 
   /* ---------- Zone de code ---------- */
   function attach(textarea, gutter, opts){
