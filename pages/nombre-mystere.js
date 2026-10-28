@@ -260,13 +260,15 @@
   function line(points){ return '<polyline class="fc-line" points="' + points.map(function(p){ return p[0] + "," + p[1]; }).join(" ") + '"/>'; }
   function label(x, y, t, anchor){ return '<text class="fc-label" x="' + x + '" y="' + y + '" text-anchor="' + (anchor || "middle") + '">' + t + "</text>"; }
 
+  /* Chaque élément de l'organigramme connaît sa hauteur h et ses largeurs à gauche (l) et à droite (r)
+     de l'axe vertical sur lequel il est centré ; draw(cx, y) le dessine à partir de son entrée (cx, y). */
   function shape(kind, txt){
     var tw = textW(txt), w, h = 40;
     if(kind === "term") w = Math.max(110, tw + 44);
     else if(kind === "io") w = Math.max(120, tw + 52);
     else if(kind === "proc") w = Math.max(110, tw + 32);
     else { w = Math.max(130, tw * 1.25 + 56); h = 64; }
-    return { w:w, h:h, draw:function(cx, y){
+    return { w:w, l:w / 2, r:w / 2, h:h, draw:function(cx, y){
       var x = cx - w / 2, s;
       if(kind === "term") s = '<rect class="fc-term" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="20"/>';
       else if(kind === "io") s = '<polygon class="fc-shape" points="' + (x + 12) + "," + y + " " + (x + w) + "," + y + " " + (x + w - 12) + "," + (y + h) + " " + x + "," + (y + h) + '"/>';
@@ -277,10 +279,11 @@
   }
 
   function seq(items){
-    if(!items.length) return { w:0, h:0, empty:true, draw:function(){ return ""; } };
-    var w = Math.max.apply(null, items.map(function(i){ return i.w; }));
+    if(!items.length) return { l:0, r:0, h:0, empty:true, draw:function(){ return ""; } };
+    var l = Math.max.apply(null, items.map(function(i){ return i.l; }));
+    var r = Math.max.apply(null, items.map(function(i){ return i.r; }));
     var h = items.reduce(function(a, i){ return a + i.h; }, 0) + GAP * (items.length - 1);
-    return { w:w, h:h, draw:function(cx, y){
+    return { l:l, r:r, h:h, draw:function(cx, y){
       var s = "";
       items.forEach(function(it, k){
         if(k){ s += arrow([[cx, y - GAP], [cx, y - 3]]); }
@@ -291,32 +294,37 @@
     }};
   }
 
+  // Décision : « oui » descend sous le losange, « non » part vers la droite puis revient au point de jonction
   function ifLayout(condTxt, yes, no){
     var D = shape("dec", condTxt), Y = seq(yes), N = seq(no);
-    var colGap = 36, lw = Math.max(Y.w, 60), rw = Math.max(N.w, 60);
-    var offL = Math.max(colGap / 2 + lw / 2, D.w / 2 + 16), offR = Math.max(colGap / 2 + rw / 2, D.w / 2 + 16);
-    var ext = Math.max(offL + lw / 2, offR + rw / 2);
+    var colGap = 40;
+    var leftPart = Math.max(Y.l, D.w / 2);
+    var rightOfYes = Math.max(Y.r, D.w / 2);
+    var xrOff = N.empty ? rightOfYes + 30 : rightOfYes + colGap + N.l;   // position de la colonne « non »
     var hb = Math.max(Y.h, N.h);
-    var h = D.h + 22 + hb + 26;
-    return { w:2 * ext, h:h, draw:function(cx, y){
-      var s = D.draw(cx, y), vy = y + D.h / 2, top = y + D.h + 22, mergeY = top + hb + 26;
-      var xl = cx - offL, xr = cx + offR;
-      s += label(cx - D.w / 2 - 6, vy - 6, "oui", "end") + label(cx + D.w / 2 + 6, vy - 6, "non", "start");
-      if(Y.empty){ s += line([[cx - D.w / 2, vy], [xl, vy], [xl, mergeY], [cx, mergeY]]); }
-      else { s += arrow([[cx - D.w / 2, vy], [xl, vy], [xl, top - 3]]) + Y.draw(xl, top) + line([[xl, top + Y.h], [xl, mergeY], [cx, mergeY]]); }
-      if(N.empty){ s += line([[cx + D.w / 2, vy], [xr, vy], [xr, mergeY], [cx, mergeY]]); }
-      else { s += arrow([[cx + D.w / 2, vy], [xr, vy], [xr, top - 3]]) + N.draw(xr, top) + line([[xr, top + N.h], [xr, mergeY], [cx, mergeY]]); }
+    var h = D.h + GAP + hb + 24;
+    return { l:leftPart, r:xrOff + (N.empty ? 10 : N.r), h:h, draw:function(cx, y){
+      var vy = y + D.h / 2, top = y + D.h + GAP, mergeY = top + hb + 24, xr = cx + xrOff;
+      var s = D.draw(cx, y);
+      s += label(cx + 6, y + D.h + 14, "oui", "start") + label(cx + D.w / 2 + 6, vy - 6, "non", "start");
+      // branche « oui » : vers le bas
+      if(Y.empty) s += line([[cx, y + D.h], [cx, mergeY]]);
+      else s += arrow([[cx, y + D.h], [cx, top - 3]]) + Y.draw(cx, top) + line([[cx, top + Y.h], [cx, mergeY]]);
+      // branche « non » : vers la droite
+      if(N.empty) s += arrow([[cx + D.w / 2, vy], [xr, vy], [xr, mergeY], [cx + 3, mergeY]]);
+      else s += arrow([[cx + D.w / 2, vy], [xr, vy], [xr, top - 3]]) + N.draw(xr, top) + arrow([[xr, top + N.h], [xr, mergeY], [cx + 3, mergeY]]);
       return s + '<circle class="fc-dot" cx="' + cx + '" cy="' + mergeY + '" r="3"/>';
     }};
   }
 
+  // Boucle « tant que » : « oui » entre dans la boucle (vers le bas), retour par la gauche, « non » sort par la droite
   function whileLayout(condTxt, until, body){
     var D = shape("dec", condTxt), B = seq(body);
-    var inner = Math.max(D.w, B.w, 60), margin = 30;
+    var innerL = Math.max(D.w / 2, B.l, 30), innerR = Math.max(D.w / 2, B.r, 30), margin = 30;
     var h = 18 + D.h + GAP + B.h + 18 + 22;
-    return { w:inner + 2 * margin + 20, h:h, draw:function(cx, y){
+    return { l:innerL + margin, r:innerR + margin, h:h, draw:function(cx, y){
       var yD = y + 18, vy = yD + D.h / 2, yB = yD + D.h + GAP, yBe = yB + (B.empty ? 0 : B.h);
-      var xL = cx - inner / 2 - margin / 2, xR = cx + inner / 2 + margin / 2, exitY = yBe + 18 + 22;
+      var xL = cx - innerL - margin / 2, xR = cx + innerR + margin / 2, exitY = yBe + 18 + 22;
       var s = line([[cx, y], [cx, y + 9]]) + arrow([[cx, y + 9], [cx, yD - 3]]);
       s += D.draw(cx, yD);
       s += label(cx + 6, yD + D.h + 14, until ? "non" : "oui", "start");
@@ -357,10 +365,10 @@
 
   function flowSvg(nodes, ctx){
     var all = seq([shape("term", "Début")].concat(toFlow(nodes, ctx), [shape("term", "Fin")]));
-    var W = Math.ceil(all.w + 60), H = Math.ceil(all.h + 40);
+    var W = Math.ceil(all.l + all.r + 60), H = Math.ceil(all.h + 40);
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Organigramme du programme">' +
       '<defs><marker id="fc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="fc-head" d="M0,0 L10,5 L0,10 z"/></marker></defs>' +
-      all.draw(W / 2, 20) + "</svg>";
+      all.draw(Math.ceil(all.l) + 30, 20) + "</svg>";
   }
 
   /* ----- Assemblage ----- */
