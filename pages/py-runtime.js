@@ -67,9 +67,18 @@
     ModuleNotFoundError: "Module introuvable : vérifiez le nom après « import »."
   };
 
-  function showError(out, err, filename){
+  function showError(out, err, filename, brief){
     var msg = String(err && err.message || err);
     var lines = msg.split("\n");
+    if(brief){
+      // programme en blocs : pas de numéro de ligne Python, seulement l'erreur et son explication
+      var lastLine = lines.filter(function(l){ return l.trim(); }).pop() || msg;
+      var t = (lastLine.match(/^(\w+)(?::|$)/) || [])[1];
+      out.newline();
+      out.parts.push([lastLine + "\n", "err"]);
+      if(t && HINTS[t]) out.hint(HINTS[t]);
+      return null;
+    }
     var fileRe = new RegExp('File "' + filename.replace(/[<>]/g, "\\$&") + '"');
     var start = lines.findIndex(function(l){ return fileRe.test(l); });
     var shown = start >= 0 ? ["Traceback (most recent call last):"].concat(lines.slice(start)) : lines;
@@ -209,7 +218,7 @@
       } else if(!pyodide){
         out.parts.push(["Impossible de charger Python : " + msg + "\nRechargez la page.\n", "err"]);
       } else {
-        result.errorLine = showError(out, e, filename);
+        result.errorLine = showError(out, e, filename, opts.briefErrors);
       }
     }finally{
       out.flush();

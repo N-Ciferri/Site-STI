@@ -419,7 +419,7 @@
   function refreshViews(){
     current = translate(ws);
     var lines = current.python ? current.python.replace(/\n$/, "").split("\n") : [];
-    $("view-python").innerHTML = lines.length
+    if(showPython) $("view-python").innerHTML = lines.length
       ? lines.map(function(l, i){ return '<span class="ln">' + (i + 1) + "</span>" + esc(l); }).join("\n")
       : '<span class="vide-msg">Assemblez des blocs : le code Python apparaîtra ici.</span>';
     $("view-pseudo").textContent = current.pseudo;
@@ -450,7 +450,28 @@
     return isNaN(v) ? null : v;
   }
 
-  /* Onglets de vues (Python / organigramme / pseudo-code) */
+  /* Vue Python des blocs : masquée par défaut pour ne pas donner la solution de l'activité 4.
+     Le professeur l'active avec l'adresse de la page suivie de ?python=1 */
+  var showPython = new URLSearchParams(location.search).get("python") === "1";
+  if(showPython){ $("tab-view-python").hidden = false; $("consigne-python").hidden = false; refreshViews(); }
+
+  /* Agrandir la zone des blocs */
+  $("btn-toggle-views").addEventListener("click", function(){
+    var grid = document.querySelector(".blocks-grid");
+    var hidden = grid.classList.toggle("views-hidden");
+    this.textContent = hidden ? "Afficher les vues" : "Masquer les vues";
+    Blockly.svgResize(ws);
+  });
+  $("btn-blocks-full").addEventListener("click", function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else if($("blocks-pane").requestFullscreen) $("blocks-pane").requestFullscreen();
+  });
+  document.addEventListener("fullscreenchange", function(){
+    $("btn-blocks-full").textContent = document.fullscreenElement === $("blocks-pane") ? "Quitter le plein écran" : "⛶ Plein écran";
+    setTimeout(function(){ Blockly.svgResize(ws); }, 50);
+  });
+
+  /* Onglets de vues (organigramme / pseudo-code / Python) */
   $("btn-fullscreen").addEventListener("click", function(){
     var pane = $("views-pane");
     if(document.fullscreenElement) document.exitFullscreen();
@@ -489,7 +510,7 @@
       return;
     }
     $("btn-run-blocks").disabled = true;
-    await SitePython.run(current.python, { output:out, filename:"<blocs>", fixedSecret:fixedSecret() });
+    await SitePython.run(current.python, { output:out, filename:"<blocs>", fixedSecret:fixedSecret(), briefErrors:!showPython });
     $("btn-run-blocks").disabled = false;
   }
   $("btn-run-blocks").addEventListener("click", runBlocks);

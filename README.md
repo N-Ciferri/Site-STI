@@ -33,3 +33,9 @@ Dans le dépôt GitHub : **Settings → Pages → Build and deployment**
 - Branche : `main`, dossier `/ (root)`
 
 Le site sera ensuite accessible à l'adresse `https://<votre-nom>.github.io/Site-STI/`.
+
+## TP Nombre mystère : vue Python des blocs
+
+Par défaut, la page `pages/nombre-mystere.html` affiche à côté des blocs l'organigramme et le pseudo-code, mais **pas le Python** (qui donnerait la réponse de l'activité 4).
+Pour l'afficher (correction, palier +), ajouter `?python=1` à l'adresse :
+`https://n-ciferri.github.io/Site-STI/pages/nombre-mystere.html?python=1`

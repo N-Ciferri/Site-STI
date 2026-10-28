@@ -39,7 +39,9 @@
   .py-status.error::before{ background:var(--danger); }
 
   /* --- Zone blocs --- */
-  .blocks-grid{ display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(0, 1fr); gap:18px; }
+  .blocks-grid{ display:grid; grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); gap:18px; }
+  .blocks-grid.views-hidden{ grid-template-columns:minmax(0, 1fr); }
+  .blocks-grid.views-hidden #views-pane{ display:none; }
   @media (max-width:960px){ .blocks-grid{ grid-template-columns:1fr; } }
   .pane{ background:var(--surface); border:var(--bw) solid var(--line); box-shadow:var(--sh); display:flex; flex-direction:column; min-width:0; }
   .pane-head{
@@ -47,7 +49,13 @@
     padding:8px 12px; border-bottom:var(--bw) solid var(--line); background:var(--cat); color:var(--on-cat);
     font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
   }
-  #blockly-area{ height:560px; min-height:420px; }
+  #blockly-area{ height:clamp(560px, calc(100vh - 150px), 920px); }
+  #blocks-pane:fullscreen #blockly-area{ height:calc(100vh - 42px); }
+  .pane-head .head-btn{
+    appearance:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+    color:var(--on-cat); background:transparent; border:2px solid var(--on-cat); padding:2px 8px;
+  }
+  .pane-head .head-btns{ display:flex; gap:6px; flex-wrap:wrap; }
   /* l'éditeur de blocs reste en couleurs claires, même en mode sombre */
   #blockly-area, .blocklyToolboxDiv, .blocklyToolbox, .blocklyDropDownDiv, .blocklyWidgetDiv{ color:#111; color-scheme:light; }
   .view-tabs{ display:flex; gap:4px; flex-wrap:wrap; }
@@ -57,7 +65,7 @@
     text-transform:uppercase; color:var(--on-cat); background:transparent; border:2px solid transparent; padding:3px 8px;
   }
   .view-tab[aria-selected="true"]{ background:var(--surface); color:var(--ink); border-color:var(--line); }
-  .view-pane{ height:560px; overflow:auto; padding:12px 14px; margin:0; }
+  .view-pane{ height:clamp(560px, calc(100vh - 150px), 920px); overflow:auto; padding:12px 14px; margin:0; }
   pre.view-pane{ font-family:var(--mono); font-size:14px; line-height:1.55; white-space:pre; color:var(--ink); }
   #view-python .ln{ display:inline-block; width:2.4em; margin-right:10px; text-align:right; color:var(--muted); user-select:none; }
   .vide-msg{ font-family:var(--font); color:var(--muted); white-space:normal; }
@@ -169,7 +177,7 @@
 
   <!-- ============ Activité 3 : blocs ============ -->
   <section id="tab-blocs" class="aide-tab" role="tabpanel">
-    <p class="consigne">Choisissez des blocs dans les catégories à gauche et assemblez-les de haut en bas. À droite, le même programme s'affiche <b>en Python</b>, <b>en organigramme</b> et <b>en pseudo-code</b>. Construisez d'abord la version « un seul essai », testez-la, puis ajoutez la boucle et le compteur d'essais.</p>
+    <p class="consigne">Choisissez des blocs dans les catégories à gauche et assemblez-les de haut en bas. À droite, le même programme s'affiche <b>en organigramme</b> et <b>en pseudo-code</b><span id="consigne-python" hidden> (et <b>en Python</b>)</span>. Construisez d'abord la version « un seul essai », testez-la, puis ajoutez la boucle et le compteur d'essais.</p>
 
     <div class="toolbar" style="margin:14px 0;">
       <button class="btn btn-primary" id="btn-run-blocks">▶ Exécuter les blocs</button>
@@ -183,22 +191,28 @@
     </div>
 
     <div class="blocks-grid">
-      <div class="pane">
-        <div class="pane-head">Mes blocs</div>
+      <div class="pane" id="blocks-pane">
+        <div class="pane-head">
+          <span>Mes blocs</span>
+          <div class="head-btns">
+            <button class="head-btn" id="btn-toggle-views" type="button">Masquer les vues</button>
+            <button class="head-btn" id="btn-blocks-full" type="button">⛶ Plein écran</button>
+          </div>
+        </div>
         <div id="blockly-area"></div>
       </div>
       <div class="pane" id="views-pane">
         <div class="pane-head">
           <span>Le même programme</span>
           <div class="view-tabs" role="tablist" aria-label="Vue du programme">
-            <button class="view-tab" role="tab" aria-selected="true" aria-controls="view-python">Python</button>
-            <button class="view-tab" role="tab" aria-selected="false" aria-controls="view-flow">Organigramme</button>
+            <button class="view-tab" role="tab" aria-selected="true" aria-controls="view-flow">Organigramme</button>
+            <button class="view-tab" role="tab" aria-selected="false" aria-controls="view-python" id="tab-view-python" hidden>Python</button>
             <button class="view-tab" role="tab" aria-selected="false" aria-controls="view-pseudo">Pseudo-code</button>
             <button class="view-tab" id="btn-fullscreen" title="Afficher cette vue en plein écran">⛶ Voir en grand</button>
           </div>
         </div>
-        <pre class="view-pane" id="view-python"></pre>
-        <div class="view-pane" id="view-flow" hidden></div>
+        <div class="view-pane" id="view-flow"></div>
+        <pre class="view-pane" id="view-python" hidden></pre>
         <pre class="view-pane" id="view-pseudo" hidden></pre>
         <ul class="warnings" id="block-warnings" hidden></ul>
       </div>
